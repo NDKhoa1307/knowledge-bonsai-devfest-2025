@@ -1,0 +1,56 @@
+name: Backend deployment to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-to-gcp-backend.yaml'
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: ${{ secrets.GCP_REGION }}
+  ARTIFACT_REGISTRY_REPO: ${{ secrets.ARTIFACT_REGISTRY_REPO }}
+  IMAGE_NAME: ${{ secrets.BACKEND_IMAGE_NAME }}
+  SERVICE_NAME: ${{ secrets.BACKEND_SERVICE_NAME }}
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: 'auth-gcloud'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Configure Docker 
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build and Tag Image
+        run: |
+          BE_FULL_IMAGE_PATH="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
+          echo "BE_FULL_IMAGE_PATH=$BE_FULL_IMAGE_PATH" >> $GITHUB_ENV
+          docker build -t "$BE_FULL_IMAGE_PATH" ./backend
+
+      - name: Push Image to Artifact Registry
+        run: |
+          docker push "$BE_FULL_IMAGE_PATH"
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          image: ${{ env.BE_FULL_IMAGE_PATH }}
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
