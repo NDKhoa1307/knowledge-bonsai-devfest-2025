@@ -1,0 +1,49 @@
+# Node modules (will be installed inside Docker)
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build output
+dist
+build
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Local database files
+*.db
+*.sqlite
+
+# Logs
+logs
+*.log
+
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# IDE stuff
+.vscode
+.idea
+
+# Docker
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+
+# Prisma
+prisma/*.log
+prisma/migrations/*/README.md
+
+# Tests
+coverage
+*.test.ts
+*.spec.ts
+jest.config.js
+jest-e2e.config.js
