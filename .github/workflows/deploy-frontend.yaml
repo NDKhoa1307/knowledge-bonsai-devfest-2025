@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'frontend/**'
-      - '.github/workflows/deploy-to-gcp-frontend.yaml'
+      - '.github/workflows/deploy-frontend.yaml'
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
