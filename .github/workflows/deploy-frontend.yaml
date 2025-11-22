@@ -43,7 +43,7 @@ jobs:
         run: |
           FE_FULL_IMAGE_PATH="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
           echo "FE_FULL_IMAGE_PATH=$FE_FULL_IMAGE_PATH" >> $GITHUB_ENV
-          docker build -t "$FE_FULL_IMAGE_PATH" ./frontend
+          docker build --build-arg VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }} -t "$FE_FULL_IMAGE_PATH" ./frontend
 
       - name: Push Image to Artifact Registry
         run: |
