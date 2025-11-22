@@ -20,7 +20,7 @@ export class CreateTreeService {
   }
 
   async createTree(data: CreateTreeDto): Promise<string> {
-    const prompt = data.prompt.trim();
+    const prompt = data.content.text.trim();
     const username = data.username.trim();
 
     const content = await this.generateContent(
