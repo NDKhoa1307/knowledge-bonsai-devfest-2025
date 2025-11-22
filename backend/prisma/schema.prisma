@@ -30,5 +30,18 @@ model Tree {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  owner User @relation(fields: [ownerId], references: [id])
+  owner   User   @relation(fields: [ownerId], references: [id])
+  quizzes Quiz[]
+}
+
+model Quiz {
+  id       Int    @id @default(autoincrement())
+  treeId   Int
+  question String
+  answer   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tree Tree @relation(fields: [treeId], references: [id])
 }
