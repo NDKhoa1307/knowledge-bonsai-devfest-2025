@@ -13,7 +13,6 @@ env:
   IMAGE_NAME: ${{ secrets.BACKEND_IMAGE_NAME }}
   SERVICE_NAME: ${{ secrets.BACKEND_SERVICE_NAME }}
   IMAGE_TAG: ${{ github.sha }}
-
 jobs:
   deploy-backend:
     runs-on: ubuntu-latest
@@ -30,6 +29,9 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
       
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      
       - name: Configure Docker 
         run: |
           gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
@@ -44,24 +46,59 @@ jobs:
         run: |
           docker push "$BE_FULL_IMAGE_PATH"
       
-      - name: Run Database Migrations via Cloud Run Job
+      - name: Install Cloud SQL Proxy
         run: |
-          gcloud run jobs delete ${{ env.SERVICE_NAME }}-migration \
-            --region=${{ env.REGION }} \
-            --quiet \
-            2>/dev/null || true
+          curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.8.0/cloud-sql-proxy.linux.amd64
+          chmod +x cloud-sql-proxy
+          sudo mv cloud-sql-proxy /usr/local/bin/
+      
+      - name: Start Cloud SQL Proxy
+        run: |
+          cloud-sql-proxy --port 5432 ${{ secrets.CLOUD_SQL_CONNECTION_NAME }} &
+          PROXY_PID=$!
+          echo "PROXY_PID=$PROXY_PID" >> $GITHUB_ENV
           
-          gcloud run jobs create ${{ env.SERVICE_NAME }}-migration \
-            --image=${{ env.BE_FULL_IMAGE_PATH }} \
-            --region=${{ env.REGION }} \
-            --set-cloudsql-instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME }} \
-            --set-env-vars=DATABASE_URL=${{ secrets.PROXY_DB_MIGRATION }} \
-            --execute-now \
-            --wait \
-            --task-timeout=10m \
-            --max-retries=1 \
-            --command=/bin/sh \
-            --args=-c,"cd /app && ls -la && ls -la prisma && npx prisma migrate deploy"
+          # Wait for proxy to be ready
+          echo "Waiting for Cloud SQL Proxy to be ready..."
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 > /dev/null 2>&1; then
+              echo "Cloud SQL Proxy is ready!"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Timeout waiting for Cloud SQL Proxy"
+              exit 1
+            fi
+            sleep 2
+          done
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth-gcloud.outputs.credentials_file_path }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Run Database Migrations
+        working-directory: ./backend
+        run: |
+          echo "Running Prisma migrations..."
+          npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_LOCAL_PROXY }}
+      
+      - name: Stop Cloud SQL Proxy
+        if: always()
+        run: |
+          if [ ! -z "$PROXY_PID" ]; then
+            kill $PROXY_PID || true
+          fi
            
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
@@ -73,3 +110,4 @@ jobs:
           env_vars: |
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+
