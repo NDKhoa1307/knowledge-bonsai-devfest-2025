@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Storage } from '@google-cloud/storage';
-import { PrismaService } from '../../../../database/services/prisma.service';
+import { PrismaService } from '@db/services';
 import { toDto, TreeResponseDto } from './getTree.dto';
 
 @Injectable()
