@@ -1,9 +1,19 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, useParams } from "react-router-dom";
 import { MainLayout } from "../layout";
-import { HomePage, GraphPage, NodesPage, UsersPage, ChatPage } from "../page";
+import { HomePage, NodesPage, UsersPage, ChatPage, WelcomePage } from "../page";
 import TreePage from "@/page/Tree/TreePage";
 
+// Wrapper component to pass treeId from route params to TreePage
+const TreePageWrapper = () => {
+  const { treeId } = useParams<{ treeId: string }>();
+  return <TreePage treeId={treeId} />;
+};
+
 export const router = createBrowserRouter([
+  {
+    path: "/welcome",
+    element: <WelcomePage />,
+  },
   {
     path: "/",
     element: <MainLayout />,
@@ -27,6 +37,10 @@ export const router = createBrowserRouter([
       {
         path: "users",
         element: <UsersPage />,
+      },
+      {
+        path: "trees/:treeId",
+        element: <TreePageWrapper />,
       },
       {
         path: "trees",

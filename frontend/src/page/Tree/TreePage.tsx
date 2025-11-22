@@ -24,7 +24,7 @@ import { RegenerateTreePage } from "./RegenerateTreePage";
 import { NodeInformationPage } from "./NodeInformationPage";
 import { nodeService, type NodeInfoExtractedResponse } from "@/service/nodeService";
 
-function TreePage() {
+function TreePage({ treeId }: { treeId?: string }) {
   const [fetchedTreeData, setFetchedTreeData] = useState<KnowledgeTreeData | null>(null);
   const [metadata, setMetadata] = useState<GetTreeResponse | null>(null);
   const { dataNodes, dataEdges } = useTreeData(fetchedTreeData);
@@ -33,15 +33,20 @@ function TreePage() {
 
   useEffect(() => {
     const fetchTree = async () => {
-      const response = await treeService.getTreeById("6");
+      if (treeId == null || treeId == undefined || treeId == "") {
+        console.warn("Tree ID is null, undefined, or empty, using sample data");
+        setFetchedTreeData(mockFrontendTree);
+        return;
+      }
+      const response = await treeService.getTreeById(treeId);
       console.log("Fetched tree response:", response);
       if (response) {
         if (response.treeData == null) {
           console.warn("Tree data is null, using sample data");
           setFetchedTreeData(mockFrontendTree);
-        } else {
-          setFetchedTreeData(response.treeData);
+          return;
         }
+        setFetchedTreeData(response.treeData);
         setMetadata(response);
       }
     };
