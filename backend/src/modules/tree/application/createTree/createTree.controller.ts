@@ -8,6 +8,10 @@ export class CreateTreeController {
 
   @Post('/trees')
   async createTree(@Body() data: CreateTreeDto): Promise<any> {
-    return this.createTreeService.createTree(data);
+    try {
+      return await this.createTreeService.createTree(data);
+    } catch (error) {
+      throw new Error(`Failed to update tree: ${error.message}`);
+    }
   }
 }
