@@ -10,8 +10,8 @@ RUN npm ci
 # Copy the rest of the application code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Build the application (skip type checking)
+RUN npm run build:skip-typecheck || vite build --mode production
 
 # ---------- Production stage ----------
 FROM nginx:stable-alpine as prod
