@@ -55,7 +55,7 @@ function TrunkNode({ data }: Props) {
         position={Position.Top}
         id="top"
         style={{
-          display: "none",
+          opacity: 0,
           background: "#78350f",
           border: "2px solid white",
           width: "8px",
@@ -69,7 +69,7 @@ function TrunkNode({ data }: Props) {
         position={Position.Bottom}
         id="bottom"
         style={{
-          display: "none",
+          opacity: 0,
           background: "#78350f",
           border: "2px solid white",
           width: "8px",
@@ -83,7 +83,7 @@ function TrunkNode({ data }: Props) {
         position={Position.Left}
         id="left"
         style={{
-          display: "none",
+          opacity: 0,
           background: "#78350f",
           border: "2px solid white",
           width: "8px",
@@ -97,7 +97,7 @@ function TrunkNode({ data }: Props) {
         position={Position.Right}
         id="right"
         style={{
-          display: "none",
+          opacity: 0,
           background: "#78350f",
           border: "2px solid white",
           width: "8px",

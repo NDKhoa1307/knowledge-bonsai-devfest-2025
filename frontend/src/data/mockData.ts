@@ -93,58 +93,58 @@ export const mockFrontendTree: KnowledgeTreeData = {
           },
         ],
       },
-      // {
-      //   id: 'js',
-      //   label: 'JavaScript',
-      //   type: 'trunk',
-      //   level: 1,
-      //   children: [
-      //     {
-      //       id: 'js-vars',
-      //       label: 'Variables',
-      //       type: 'trunk',
-      //       level: 2,
-      //       children: [
-      //         { id: 'vars-let', label: 'let', type: 'leaf', level: 3 },
-      //       ],
-      //     },
-      //     {
-      //       id: 'js-async',
-      //       label: 'Async',
-      //       type: 'trunk',
-      //       level: 2,
-      //       children: [
-      //         { id: 'async-promise', label: 'Promise', type: 'leaf', level: 3 },
-      //       ],
-      //     },
-      //   ],
-      // },
-      // {
-      //   id: 'dom',
-      //   label: 'DOM',
-      //   type: 'trunk',
-      //   level: 1,
-      //   children: [
-      //     {
-      //       id: 'dom-query',
-      //       label: 'Query',
-      //       type: 'trunk',
-      //       level: 2,
-      //       children: [
-      //         { id: 'query-getid', label: 'getElementById', type: 'leaf', level: 3 },
-      //       ],
-      //     },
-      //     {
-      //       id: 'dom-events',
-      //       label: 'Events',
-      //       type: 'trunk',
-      //       level: 2,
-      //       children: [
-      //         { id: 'events-click', label: 'click', type: 'leaf', level: 3 },
-      //       ],
-      //     },
-      //   ],
-      // },
+      {
+        id: 'js',
+        label: 'JavaScript',
+        type: 'trunk',
+        level: 1,
+        children: [
+          {
+            id: 'js-vars',
+            label: 'Variables',
+            type: 'branch',
+            level: 2,
+            children: [
+              { id: 'vars-let', label: 'let', type: 'leaf', level: 3 },
+            ],
+          },
+          {
+            id: 'js-async',
+            label: 'Async',
+            type: 'branch',
+            level: 2,
+            children: [
+              { id: 'async-promise', label: 'Promise', type: 'leaf', level: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'dom',
+        label: 'DOM',
+        type: 'trunk',
+        level: 1,
+        children: [
+          {
+            id: 'dom-query',
+            label: 'Query',
+            type: 'branch',
+            level: 2,
+            children: [
+              { id: 'query-getid', label: 'getElementById', type: 'leaf', level: 3 },
+            ],
+          },
+          {
+            id: 'dom-events',
+            label: 'Events',
+            type: 'branch',
+            level: 2,
+            children: [
+              { id: 'events-click', label: 'click', type: 'leaf', level: 3 },
+            ],
+          },
+        ],
+      },
     ],
   },
 };
@@ -176,6 +176,7 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData): {
       position: { x: xPosition, y: yPosition }, // Starting position
       data: { label: nodeData.label },
     };
+
     // Check if the node is on the right side, if so, use the right side node type instead
     if (parentHandle === 'right' && nodeData.type === 'branch') {
       console.log('Changing branch to branchRight for node:', nodeData.id);
@@ -246,6 +247,7 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData): {
         // Pot: children grow vertically upward
         nodeData.children.forEach((child, index) => {
           const childY = yPosition - VERTICAL_SPACING * (index + 1);
+          console.log('Processing node from pot:', nodeData)
           processNode(child, nodeData.id, xPosition, childY, 'top');
         });
       } else if (nodeData.type === 'trunk' && childCount > 0) {
