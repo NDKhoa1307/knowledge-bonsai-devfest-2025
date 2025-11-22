@@ -35,9 +35,6 @@ COPY package.json yarn.lock ./
 # Copy entire prisma directory from builder (includes schema + migrations)
 COPY --from=builder /app/prisma ./prisma/
 
-# Debug: verify prisma files exist in production
-RUN ls -la ./prisma/ && cat ./prisma/schema.prisma
-
 # Install production dependencies
 RUN yarn install --frozen-lockfile --production
 

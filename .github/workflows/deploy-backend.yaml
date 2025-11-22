@@ -13,6 +13,7 @@ env:
   IMAGE_NAME: ${{ secrets.BACKEND_IMAGE_NAME }}
   SERVICE_NAME: ${{ secrets.BACKEND_SERVICE_NAME }}
   IMAGE_TAG: ${{ github.sha }}
+
 jobs:
   deploy-backend:
     runs-on: ubuntu-latest
@@ -45,21 +46,23 @@ jobs:
       
       - name: Run Database Migrations via Cloud Run Job
         run: |
+          gcloud run jobs delete ${{ env.SERVICE_NAME }}-migration \
+            --region=${{ env.REGION }} \
+            --quiet \
+            2>/dev/null || true
+          
           gcloud run jobs create ${{ env.SERVICE_NAME }}-migration \
             --image=${{ env.BE_FULL_IMAGE_PATH }} \
             --region=${{ env.REGION }} \
             --set-cloudsql-instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME }} \
             --set-env-vars=DATABASE_URL=${{ secrets.PROXY_DB_MIGRATION }} \
-            --command=yarn \
-            --args=prisma,migrate,deploy,--schema=./prisma/schema.prisma \
-            --max-retries=1 \
+            --execute-now \
+            --wait \
             --task-timeout=10m \
-            2>/dev/null || true
-          
-          gcloud run jobs execute ${{ env.SERVICE_NAME }}-migration \
-            --region=${{ env.REGION }} \
-            --wait
-      
+            --max-retries=1 \
+            --command=/bin/sh \
+            --args=-c,"cd /app && ls -la && ls -la prisma && npx prisma migrate deploy"
+           
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
