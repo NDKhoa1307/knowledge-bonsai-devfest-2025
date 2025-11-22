@@ -20,7 +20,7 @@ export class CreateTreeService {
     }
   }
 
-  async createTree(data: CreateTreeDto): Promise<string> {
+  async createTree(data: CreateTreeDto): Promise<{ id: string; data: any }> {
     const prompt = data.content.text.trim();
     const username = data.username.trim();
 
@@ -28,9 +28,12 @@ export class CreateTreeService {
       `Create a detailed tree structure based on the following prompt: ${prompt}`,
     );
 
-    await this.saveTreeToDB(username, content);
+    const newTreeObj = await this.saveTreeToDB(username, content);
 
-    return content;
+    return {
+      id: newTreeObj.id,
+      data: content,
+    };
   }
 
   async generateContent(prompt: string): Promise<any> {
@@ -63,7 +66,7 @@ export class CreateTreeService {
     return parsedData;
   }
 
-  async saveTreeToDB(username: string, treeData: any): Promise<void> {
+  async saveTreeToDB(username: string, treeData: any): Promise<any> {
     let user = await this.dbContext.user.findFirst({
       where: { email: username },
     });
@@ -88,12 +91,13 @@ export class CreateTreeService {
         contentType: 'application/json',
       });
 
-    await this.dbContext.tree.create({
+    return await this.dbContext.tree.create({
       data: {
         ownerId: user.id,
         title: title,
         bucket_url: object_key,
       },
+      select: { id: true },
     });
   }
 }
