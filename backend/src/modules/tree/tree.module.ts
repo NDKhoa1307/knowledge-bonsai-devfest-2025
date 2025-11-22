@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '@db';
+import { GcpBucketService } from '@/services/gcp_bucket.service';
 import * as useCases from './application';
 
 const apis = Object.values(useCases);
@@ -9,6 +10,6 @@ const services = apis.filter((x) => x.name.endsWith('Service'));
 @Module({
   imports: [DatabaseModule],
   controllers: [...controllers],
-  providers: [...services],
+  providers: [...services, GcpBucketService],
 })
 export class TreeModule {}

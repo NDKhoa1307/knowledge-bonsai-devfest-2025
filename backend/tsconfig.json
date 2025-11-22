@@ -21,6 +21,9 @@
       "@db/*": [
         "src/database/*"
       ],
+      "@/*": [
+        "src/*"
+      ]
     },
     "incremental": true,
     "skipLibCheck": true,
