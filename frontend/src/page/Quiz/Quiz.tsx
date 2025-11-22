@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Drawer, Divider, Modal } from 'antd';
+import { Drawer, Divider, Modal, Spin } from 'antd';
 import type { RadioChangeEvent } from 'antd';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { type QuizProps } from './types';
+import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { type QuizProps, type QuizData } from './types';
 import { QuizButton } from './QuizButton';
 import { QuizHeader } from './QuizHeader';
 import { QuizQuestion } from './QuizQuestion';
@@ -10,8 +10,9 @@ import { QuizNavigation } from './QuizNavigation';
 import { QuizFooter } from './QuizFooter';
 import { QuizResult } from './QuizResult';
 import { mockQuizData } from './mockData';
+import { quizService } from '@/service';
 
-export const Quiz = ({ quizData }: QuizProps) => {
+export const Quiz = ({ quizData: propQuizData, treeId }: QuizProps) => {
   const [open, setOpen] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
@@ -19,8 +20,15 @@ export const Quiz = ({ quizData }: QuizProps) => {
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [showResult, setShowResult] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
+  
+  // State for fetched quiz data
+  const [fetchedQuizData, setFetchedQuizData] = useState<QuizData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const questions = quizData?.quizzes || mockQuizData.quizzes;
+  // Use fetched data if available, then prop data, then mock data
+  const quizData = fetchedQuizData || propQuizData || mockQuizData;
+  const questions = quizData.quizzes;
   const totalQuestions = questions.length;
   const answeredCount = Object.keys(userAnswers).length;
 
@@ -42,14 +50,45 @@ export const Quiz = ({ quizData }: QuizProps) => {
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const handleOpenDrawer = () => {
+  const handleOpenDrawer = async () => {
     setOpen(true);
-    setStartTime(Date.now());
     setCurrentQuestion(0);
     setUserAnswers({});
     setElapsedTime(0);
     setShowResult(false);
     setCorrectCount(0);
+    setFetchError(null);
+
+    // Fetch quiz data if treeId is provided and we don't have prop data
+    if (treeId && !propQuizData) {
+      setLoading(true);
+      console.log(`[Quiz] Fetching quiz data for tree ${treeId}...`);
+      
+      try {
+        const data = await quizService.getQuizzes(treeId);
+        
+        if (data) {
+          console.log('[Quiz] Quiz data fetched successfully:', data);
+          setFetchedQuizData(data);
+          setStartTime(Date.now()); // Start timer after data is loaded
+        } else {
+          console.warn('[Quiz] No quiz data returned, using mock data');
+          setFetchError('Failed to load quiz data. Using sample questions.');
+          setFetchedQuizData(mockQuizData);
+          setStartTime(Date.now());
+        }
+      } catch (error) {
+        console.error('[Quiz] Error fetching quiz data:', error);
+        setFetchError('Failed to load quiz data. Using sample questions.');
+        setFetchedQuizData(mockQuizData);
+        setStartTime(Date.now());
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // No fetch needed, start timer immediately
+      setStartTime(Date.now());
+    }
   };
 
   const handleCloseDrawer = () => {
@@ -181,7 +220,23 @@ export const Quiz = ({ quizData }: QuizProps) => {
           borderTop: '2px solid #f0f0f0',
         }}
       >
-        {showResult ? (
+        {loading ? (
+          /* Show Loading State */
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            minHeight: '300px',
+            gap: '16px'
+          }}>
+            <Spin 
+              indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} 
+              size="large" 
+            />
+            <p style={{ fontSize: '16px', color: '#666' }}>Loading quiz questions...</p>
+          </div>
+        ) : showResult ? (
           /* Show Results */
           <QuizResult
             correctCount={correctCount}
@@ -194,6 +249,20 @@ export const Quiz = ({ quizData }: QuizProps) => {
         ) : (
           /* Show Quiz Questions */
           <>
+            {/* Show error message if fetch failed */}
+            {fetchError && (
+              <div style={{
+                padding: '12px 16px',
+                marginBottom: '16px',
+                backgroundColor: '#fff7e6',
+                border: '1px solid #ffd591',
+                borderRadius: '4px',
+                color: '#ad6800'
+              }}>
+                ⚠️ {fetchError}
+              </div>
+            )}
+            
             {/* Question Navigation */}
             <QuizNavigation
               questions={questions}
