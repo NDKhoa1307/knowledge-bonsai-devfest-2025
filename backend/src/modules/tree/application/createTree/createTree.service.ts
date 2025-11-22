@@ -95,7 +95,7 @@ export class CreateTreeService {
         data: {
           ownerId: user.id,
           title: title,
-          bucket_url: object_key,
+          bucket_url: `gs://${bucket_name}/${object_key}`,
         },
         select: { id: true },
       });
