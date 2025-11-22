@@ -1,9 +1,8 @@
 # ---------- Build stage ----------
 FROM node:20-alpine as builder
-
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Copy package files and prisma schema
 COPY package.json yarn.lock ./
 COPY prisma ./prisma/
 
@@ -22,24 +21,32 @@ RUN yarn build
 # ---------- Production stage ----------
 FROM node:20-alpine as production
 
-# Set the node env and the port that the container will listen on
-# (Cloud Run requires the port to be set by the service)
 ENV NODE_ENV production
 ENV PORT 8080
 
 WORKDIR /app
 
-COPY package*.json yarn.lock ./
+# Copy package files
+COPY package.json yarn.lock ./
 
-# Copy prisma directory 
-COPY --from=builder /app/prisma ./prisma
+# Copy prisma schema from source (not builder)
+COPY prisma ./prisma/
 
-# Install only production dependencies
+# Install production dependencies
 RUN yarn install --frozen-lockfile --production
 
-# Copy built application from the builder stage
+# Install prisma CLI since it's in devDependencies
+RUN yarn add prisma@6.19.0 --ignore-workspace-root-check
+
+# Generate Prisma Client in production
+RUN yarn prisma generate
+
+# Copy built application from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
+# Verify prisma schema exists (for debugging)
+RUN ls -la /app/prisma/
+
+EXPOSE 8080
 
 CMD ["node", "dist/main.js"]
