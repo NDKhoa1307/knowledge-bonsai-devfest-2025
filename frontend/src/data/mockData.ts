@@ -9,7 +9,7 @@ import { type Node, type Edge } from 'reactflow';
 export interface TreeNodeData {
   id: string;
   label: string;
-  type: 'pot' | 'trunk' | 'leaf';
+  type: 'pot' | 'trunk' | 'leaf' | 'branch' | 'branchRight' | 'leafRight';
   level: number; // 0 = pot, 1+ = levels up
   children?: TreeNodeData[];
 }
@@ -48,7 +48,7 @@ export const mockFrontendTree: KnowledgeTreeData = {
           {
             id: 'html-div',
             label: 'div',
-            type: 'trunk',
+            type: 'branch',
             level: 2,
             children: [
               { id: 'div-class', label: 'class', type: 'leaf', level: 3 },
@@ -58,7 +58,7 @@ export const mockFrontendTree: KnowledgeTreeData = {
           {
             id: 'html-span',
             label: 'span',
-            type: 'trunk',
+            type: 'branch',
             level: 2,
             children: [
               { id: 'span-inline', label: 'inline', type: 'leaf', level: 3 },
@@ -76,7 +76,7 @@ export const mockFrontendTree: KnowledgeTreeData = {
           {
             id: 'css-grid',
             label: 'Grid',
-            type: 'trunk',
+            type: 'branch',
             level: 2,
             children: [
               { id: 'grid-template', label: 'template', type: 'leaf', level: 3 },
@@ -85,7 +85,7 @@ export const mockFrontendTree: KnowledgeTreeData = {
           {
             id: 'css-selectors',
             label: 'Selectors',
-            type: 'trunk',
+            type: 'branch',
             level: 2,
             children: [
               { id: 'selector-class', label: '.class', type: 'leaf', level: 3 },
@@ -102,7 +102,7 @@ export const mockFrontendTree: KnowledgeTreeData = {
           {
             id: 'js-vars',
             label: 'Variables',
-            type: 'trunk',
+            type: 'branch',
             level: 2,
             children: [
               { id: 'vars-let', label: 'let', type: 'leaf', level: 3 },
@@ -111,7 +111,7 @@ export const mockFrontendTree: KnowledgeTreeData = {
           {
             id: 'js-async',
             label: 'Async',
-            type: 'trunk',
+            type: 'branch',
             level: 2,
             children: [
               { id: 'async-promise', label: 'Promise', type: 'leaf', level: 3 },
@@ -128,7 +128,7 @@ export const mockFrontendTree: KnowledgeTreeData = {
           {
             id: 'dom-query',
             label: 'Query',
-            type: 'trunk',
+            type: 'branch',
             level: 2,
             children: [
               { id: 'query-getid', label: 'getElementById', type: 'leaf', level: 3 },
@@ -137,7 +137,7 @@ export const mockFrontendTree: KnowledgeTreeData = {
           {
             id: 'dom-events',
             label: 'Events',
-            type: 'trunk',
+            type: 'branch',
             level: 2,
             children: [
               { id: 'events-click', label: 'click', type: 'leaf', level: 3 },
@@ -170,27 +170,64 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData): {
     parentHandle?: string
   ) {
     // Create ReactFlow node
-    const node: Node = {
+    const rootNode: Node = {
       id: nodeData.id,
       type: nodeData.type,
-      position: { x: xPosition, y: yPosition },
+      position: { x: xPosition, y: yPosition }, // Starting position
       data: { label: nodeData.label },
     };
-    nodes.push(node);
 
-    // Create edge from parent to this node
+    // Check if the node is on the right side, if so, use the right side node type instead
+    if (parentHandle === 'right' && nodeData.type === 'branch') {
+      console.log('Changing branch to branchRight for node:', nodeData.id);
+      rootNode.type = 'branchRight';
+    }
+    // If the node is at the root center it by adding a offset
+    if (nodeData.type === 'pot') {
+      rootNode.position.x -= 65; // Half the pot width
+    }
+    nodes.push(rootNode);
+
+    // Create edge any previous parent to this node
     if (parentId) {
+      console.log('Creating edge from', parentId, 'to', nodeData.id);
+
+      // Default source handle for vertical connections
       let sourceHandle = 'top';
       let targetHandle = 'bottom';
 
       // For horizontal branches
       if (parentHandle === 'left') {
         sourceHandle = 'left';
-        targetHandle = 'target-right';
+        targetHandle = 'right';
       } else if (parentHandle === 'right') {
         sourceHandle = 'right';
-        targetHandle = 'target-left';
+        targetHandle = 'left';
       }
+
+      console.log('Node data:', {
+        nodeData,
+        parentId,
+        nodeId: nodeData.id,
+        xPosition,
+        yPosition,
+        parentHandle,
+        sourceHandle,
+        targetHandle,
+      });
+
+      const edgeId = `e-${parentId}-${nodeData.id}`;
+      console.log('Edge being pushed:', {
+        id: edgeId,
+        source: parentId,
+        sourceHandle,
+        target: nodeData.id,
+        targetHandle,
+        edgeId: edgeId,
+        currentChild: nodeData,
+        childId: nodeData.id,
+        parentId: parentId,
+      })
 
       edges.push({
         id: `e-${parentId}-${nodeData.id}`,
@@ -198,16 +235,18 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData): {
         target: nodeData.id,
         sourceHandle,
         targetHandle,
+        type: nodeData.type === 'trunk' ? 'trunk' : 'branch',
       });
     }
     // Process children
     if (nodeData.children && nodeData.children.length > 0) {
       const childCount = nodeData.children.length;
-      
+
       if (nodeData.type === 'pot' || nodeData.level === 0) {
         // Pot: children grow vertically upward
         nodeData.children.forEach((child, index) => {
           const childY = yPosition - VERTICAL_SPACING * (index + 1);
+          console.log('Processing node from pot:', nodeData)
           processNode(child, nodeData.id, xPosition, childY, 'top');
         });
       } else if (nodeData.type === 'trunk' && childCount > 0) {
@@ -227,21 +266,35 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData): {
           processNode(child, nodeData.id, childX, yPosition, 'right');
         });
       } else {
-        // Leaves can have more leaves extending horizontally
+        // This shit is processing branch
+        console.log('[Location]:', {
+          nodeData: nodeData,
+          parentHandle: parentHandle,
+
+        });
         nodeData.children.forEach((child, index) => {
-          const isLeft = index % 2 === 0;
-          const childX = isLeft 
-            ? xPosition - HORIZONTAL_SPACING 
+          let childX = parentHandle
+            ? xPosition - HORIZONTAL_SPACING
             : xPosition + HORIZONTAL_SPACING;
-          const handle = isLeft ? 'left' : 'right';
-          processNode(child, nodeData.id, childX, yPosition, handle);
+          if (parentHandle === 'right') {
+            childX = parentHandle
+              ? xPosition + HORIZONTAL_SPACING
+              : xPosition - HORIZONTAL_SPACING;
+          }
+          console.log('[Location] Processing leaf children:', {
+            nodeId: nodeData.id,
+            childId: child.id,
+            parentHandle: parentHandle,
+            childX: childX
+          });
+          processNode(child, nodeData.id, childX, yPosition, parentHandle);
         });
       }
     }
   }
 
   // Start from the root (pot) at the bottom center
-  processNode(treeData.root, null, 500, 700);
+  processNode(treeData.root, null, 0, 0);
 
   return { nodes, edges };
 }
@@ -349,7 +402,7 @@ export function validateTreeData(data: KnowledgeTreeData): {
   function validateNode(node: TreeNodeData, path: string) {
     if (!node.id) errors.push(`${path}: Missing id`);
     if (!node.label) errors.push(`${path}: Missing label`);
-    if (!['pot', 'trunk', 'leaf'].includes(node.type)) {
+    if (!['pot', 'trunk', 'leaf', 'branch'].includes(node.type)) {
       errors.push(`${path}: Invalid type '${node.type}'`);
     }
     if (typeof node.level !== 'number') {

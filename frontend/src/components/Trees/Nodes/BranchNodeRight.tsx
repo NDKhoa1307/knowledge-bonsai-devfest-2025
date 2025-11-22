@@ -1,0 +1,106 @@
+import { Handle, Position } from "reactflow";
+
+type Props = {
+  data?: {
+    label?: string;
+  };
+};
+
+function BranchNodeRight({ data }: Props) {
+  return (
+    <div className="relative">
+      {/* Branch shape container */}
+      <div
+        className="relative flex items-center justify-center"
+        style={{
+          width: "50px",
+          height: "20px",
+          background: "linear-gradient(90deg, #92400e 0%, #a16207 50%, #92400e 100%)",
+          borderRadius: "20px",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)",
+        }}
+      >
+        {/* Text overlay */}
+        <span className="text-white font-semibold text-xs text-center px-2">{data?.label || ""}</span>
+
+        {/* Branch texture detail */}
+        <div
+          className="absolute"
+          style={{
+            width: "6px",
+            height: "6px",
+            background: "rgba(0, 0, 0, 0.2)",
+            borderRadius: "50%",
+            top: "25%",
+            left: "15%",
+          }}
+        />
+        <div
+          className="absolute"
+          style={{
+            width: "6px",
+            height: "6px",
+            background: "rgba(0, 0, 0, 0.2)",
+            borderRadius: "50%",
+            top: "60%",
+            right: "20%",
+          }}
+        />
+      </div>
+
+      {/* Handles */}
+
+      <Handle
+        id="left"
+        type="target"
+        position={Position.Left}
+        style={{
+          background: "#92400e",
+          border: "2px solid white",
+          width: "8px",
+          height: "8px",
+        }}
+      />
+
+      {/* Right should be the source that will connect to other branch if possible */}
+      <Handle
+        id="right"
+        type="source"
+        position={Position.Right}
+        style={{
+          background: "#92400e",
+          border: "2px solid white",
+          width: "8px",
+          height: "8px",
+        }}
+      />
+
+      {/* Top and Bottom handles - for connecting to leaves => source*/}
+      <Handle
+        id="top"
+        type="source"
+        position={Position.Top}
+        style={{
+          background: "#22c55e",
+          border: "2px solid white",
+          width: "8px",
+          height: "8px",
+        }}
+      />
+
+      <Handle
+        id="bottom"
+        type="source"
+        position={Position.Bottom}
+        style={{
+          background: "#22c55e",
+          border: "2px solid white",
+          width: "8px",
+          height: "8px",
+        }}
+      />
+    </div>
+  );
+}
+
+export default BranchNodeRight;

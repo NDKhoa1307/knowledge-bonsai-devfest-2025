@@ -1,10 +1,11 @@
-import { createBrowserRouter } from 'react-router-dom';
-import { MainLayout } from '../layout';
-import { HomePage, GraphPage, NodesPage, UsersPage, ChatPage } from '../page';
+import { createBrowserRouter } from "react-router-dom";
+import { MainLayout } from "../layout";
+import { HomePage, GraphPage, NodesPage, UsersPage, ChatPage } from "../page";
+import TreePage from "@/page/Tree/TreePage";
 
 export const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <MainLayout />,
     children: [
       {
@@ -12,22 +13,25 @@ export const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: 'chat',
+        path: "chat",
         element: <ChatPage />,
       },
       {
-        path: 'graph',
+        path: "graph",
         element: <GraphPage />,
       },
       {
-        path: 'nodes',
+        path: "nodes",
         element: <NodesPage />,
       },
       {
-        path: 'users',
+        path: "users",
         element: <UsersPage />,
+      },
+      {
+        path: "trees",
+        element: <TreePage />,
       },
     ],
   },
 ]);
-
