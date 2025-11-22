@@ -1,1 +1,1 @@
-export * from './createTree.prompts';
+export { createTreeSystemPrompt } from './createTree.prompts';

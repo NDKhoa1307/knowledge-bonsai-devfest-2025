@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@db/services';
 import { CreateQuizDto } from './createQuiz.dto';
 import { QuizDataSchema } from './createQuiz.schema';
-import { createQuizSystemPrompt as systemprompt } from '../../prompts';
+import { createQuizSystemPrompt as system_prompt } from '../../prompts';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 @Injectable()
@@ -19,8 +19,7 @@ export class CreateQuizService {
     }
   }
 
-  async createQuiz(data: CreateQuizDto): Promise<string> {
-    const treeId = data.treeId;
+  async createQuiz(treeId: number, data: CreateQuizDto): Promise<string> {
     const username = data.username.trim();
 
     // Verify tree exists
@@ -65,7 +64,7 @@ export class CreateQuizService {
       config: {
         responseMimeType: 'application/json',
         responseJsonSchema: jsonSchema,
-        systemInstruction: systemprompt,
+        systemInstruction: system_prompt,
       },
     });
 
