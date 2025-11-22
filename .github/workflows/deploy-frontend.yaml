@@ -55,3 +55,6 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
           unauthenticated: true
+          env_vars: |
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+            VITE_MOCK_MODE=${{ secrets.VITE_MOCK_MODE }}

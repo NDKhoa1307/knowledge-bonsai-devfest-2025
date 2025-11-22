@@ -3,9 +3,14 @@ import { Storage } from '@google-cloud/storage';
 import { PrismaService } from '@db/services';
 import { toDto, TreeResponseDto } from './getTree.dto';
 
+import { GcpBucketService } from '@/services';
+
 @Injectable()
 export class GetTreeService {
-  constructor(private readonly dbContext: PrismaService) {}
+  constructor(
+    private readonly dbContext: PrismaService,
+    private readonly gcpBucketService: GcpBucketService,
+  ) {}
 
   async getTreeById(id: number): Promise<TreeResponseDto> {
     const tree = await this.dbContext.tree.findUnique({
@@ -28,13 +33,17 @@ export class GetTreeService {
     // Fetch tree data from Google Cloud Storage
     let treeData = null;
     const storage = new Storage();
-    const bucket_name = 'knowledge-bonsai';
+    const bucket_name = process.env.GCP_BUCKET_NAME || '';
 
     try {
       if (tree.bucket_url && tree.bucket_url.includes('/')) {
+        const { bucketName, objectKey } = this.gcpBucketService.parseGcsUrl(
+          tree.bucket_url,
+        );
+
         const [fileContent] = await storage
           .bucket(bucket_name)
-          .file(tree.bucket_url)
+          .file(objectKey)
           .download();
 
         if (fileContent && fileContent.length > 0) {
