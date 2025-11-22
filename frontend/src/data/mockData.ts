@@ -200,7 +200,6 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData): {
         targetHandle,
       });
     }
-
     // Process children
     if (nodeData.children && nodeData.children.length > 0) {
       const childCount = nodeData.children.length;
