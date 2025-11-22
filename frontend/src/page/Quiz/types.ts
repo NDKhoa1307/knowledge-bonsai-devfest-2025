@@ -10,5 +10,6 @@ export interface QuizData {
 
 export interface QuizProps {
   quizData?: QuizData;
+  treeId?: number; // Tree ID to fetch quiz data from backend
 }
 

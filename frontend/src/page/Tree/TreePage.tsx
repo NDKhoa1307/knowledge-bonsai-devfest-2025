@@ -135,7 +135,7 @@ function TreePage({ treeId }: { treeId?: string }) {
 
         {/* Quiz Button in Top Right Corner */}
         <Panel position="top-right" style={{ margin: 10 }}>
-          <Quiz />
+          <Quiz treeId={metadata?.id ? parseInt(metadata.id) : undefined} />
         </Panel>
 
         {/* <Panel position="bottom-center" style={{ margin: 10 }}>

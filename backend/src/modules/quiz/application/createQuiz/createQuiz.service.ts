@@ -7,11 +7,16 @@ import { QuizDataSchema } from './createQuiz.schema';
 import { createQuizSystemPrompt as system_prompt } from '../../prompts';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
+import { GcpBucketService } from '@/services/';
+
 @Injectable()
 export class CreateQuizService {
   private readonly api_key: string;
 
-  constructor(private readonly dbContext: PrismaService) {
+  constructor(
+    private readonly dbContext: PrismaService,
+    private readonly gcpBucketService: GcpBucketService,
+  ) {
     this.api_key = process.env.GEMINI_API_KEY || '';
 
     if (!this.api_key.length) {
@@ -44,10 +49,13 @@ export class CreateQuizService {
   }
 
   async getTreeDataFromGCS(bucketUrl: string): Promise<any> {
-    const bucket_name = 'knowledge-bonsai';
+    const bucket_name = process.env.GCP_BUCKET_NAME || '';
     const storage = new Storage();
 
-    const file = storage.bucket(bucket_name).file(bucketUrl);
+    const { bucketName, objectKey } =
+      this.gcpBucketService.parseGcsUrl(bucketUrl);
+
+    const file = storage.bucket(bucket_name).file(objectKey);
     const [contents] = await file.download();
 
     return JSON.parse(contents.toString());
