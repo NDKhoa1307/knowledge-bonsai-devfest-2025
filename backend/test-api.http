@@ -1,0 +1,21 @@
+### Test GET Tree by ID
+GET http://localhost:3000/trees/1
+Content-Type: application/json
+
+### Test CREATE Tree
+POST http://localhost:3000/trees
+Content-Type: application/json
+
+{
+  "username": "huy",
+  "prompt": "create for me a tree"
+}
+
+### Test CREATE Tree - Another Example
+POST http://localhost:3000/trees
+Content-Type: application/json
+
+{
+  "username": "john",
+  "prompt": "generate a learning path for JavaScript"
+}
