@@ -1,0 +1,164 @@
+import api from './api';
+import { 
+  type KnowledgeTreeData, 
+  type BackendTreeResponse,
+  convertTreeToReactFlow,
+  validateTreeData 
+} from '../data/mockData';
+import { type Node, type Edge } from 'reactflow';
+
+/**
+ * Tree Service - Handles all tree-related API calls
+ */
+
+export interface TreeListItem {
+  id: string;
+  title: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  nodeCount?: number;
+}
+
+export const treeService = {
+  /**
+   * Get all trees
+   */
+  getAllTrees: async (): Promise<TreeListItem[]> => {
+    const response = await api.get<TreeListItem[]>('/trees');
+    return response.data;
+  },
+
+  /**
+   * Get a single tree by ID
+   */
+  getTreeById: async (id: string): Promise<KnowledgeTreeData> => {
+    const response = await api.get<BackendTreeResponse>(`/trees/${id}`);
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch tree');
+    }
+
+    // Validate the tree data
+    const validation = validateTreeData(response.data.data);
+    if (!validation.valid) {
+      console.error('Invalid tree data:', validation.errors);
+      throw new Error('Invalid tree data structure');
+    }
+
+    return response.data.data;
+  },
+
+  /**
+   * Get tree and convert to ReactFlow format
+   */
+  getTreeForVisualization: async (id: string): Promise<{
+    nodes: Node[];
+    edges: Edge[];
+    metadata: KnowledgeTreeData['metadata'];
+  }> => {
+    const treeData = await treeService.getTreeById(id);
+    const { nodes, edges } = convertTreeToReactFlow(treeData);
+    
+    return {
+      nodes,
+      edges,
+      metadata: treeData.metadata,
+    };
+  },
+
+  /**
+   * Create a new tree
+   */
+  createTree: async (data: KnowledgeTreeData): Promise<{ id: string; tree: KnowledgeTreeData }> => {
+    // Validate before sending
+    const validation = validateTreeData(data);
+    if (!validation.valid) {
+      throw new Error(`Invalid tree data: ${validation.errors.join(', ')}`);
+    }
+
+    const response = await api.post<{ id: string; tree: KnowledgeTreeData }>('/trees', data);
+    return response.data;
+  },
+
+  /**
+   * Update an existing tree
+   */
+  updateTree: async (id: string, data: KnowledgeTreeData): Promise<KnowledgeTreeData> => {
+    // Validate before sending
+    const validation = validateTreeData(data);
+    if (!validation.valid) {
+      throw new Error(`Invalid tree data: ${validation.errors.join(', ')}`);
+    }
+
+    const response = await api.put<BackendTreeResponse>(`/trees/${id}`, data);
+    return response.data.data;
+  },
+
+  /**
+   * Delete a tree
+   */
+  deleteTree: async (id: string): Promise<void> => {
+    await api.delete(`/trees/${id}`);
+  },
+
+  /**
+   * Add a node to an existing tree
+   */
+  addNode: async (
+    treeId: string, 
+    parentId: string, 
+    nodeData: {
+      label: string;
+      type: 'trunk' | 'leaf';
+    }
+  ): Promise<KnowledgeTreeData> => {
+    const response = await api.post<BackendTreeResponse>(
+      `/trees/${treeId}/nodes`,
+      {
+        parentId,
+        ...nodeData,
+      }
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Update a node in a tree
+   */
+  updateNode: async (
+    treeId: string,
+    nodeId: string,
+    nodeData: {
+      label?: string;
+      type?: 'trunk' | 'leaf';
+    }
+  ): Promise<KnowledgeTreeData> => {
+    const response = await api.patch<BackendTreeResponse>(
+      `/trees/${treeId}/nodes/${nodeId}`,
+      nodeData
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Delete a node from a tree
+   */
+  deleteNode: async (treeId: string, nodeId: string): Promise<KnowledgeTreeData> => {
+    const response = await api.delete<BackendTreeResponse>(
+      `/trees/${treeId}/nodes/${nodeId}`
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Search trees
+   */
+  searchTrees: async (query: string): Promise<TreeListItem[]> => {
+    const response = await api.get<TreeListItem[]>('/trees/search', {
+      params: { q: query },
+    });
+    return response.data;
+  },
+};
+
