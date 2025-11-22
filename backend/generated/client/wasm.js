@@ -139,7 +139,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "E:\\University\\DevFest2025\\knowledge-bonsai-devfest-2025\\backend\\generated\\client",
+      "value": "E:\\source\\Competitions\\knowledge-bonsai-devfest-2025\\backend\\generated\\client",
       "fromEnvVar": null
     },
     "config": {
@@ -153,7 +153,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "E:\\University\\DevFest2025\\knowledge-bonsai-devfest-2025\\backend\\prisma\\schema.prisma",
+    "sourceFilePath": "E:\\source\\Competitions\\knowledge-bonsai-devfest-2025\\backend\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
