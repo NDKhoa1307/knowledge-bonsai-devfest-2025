@@ -59,7 +59,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          yarn migrate deploy
+          yarn prisma migrate deploy
 
       - name: Configure Docker 
         run: |
