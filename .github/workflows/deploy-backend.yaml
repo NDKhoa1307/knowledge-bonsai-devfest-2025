@@ -103,7 +103,7 @@ jobs:
           echo "Running Prisma migrations..."
           yarn prisma migrate deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_LOCAL_PROXY }}
+          DATABASE_URL: ${{ secrets.PROXY_DB_MIGRATION }}
       
       - name: Stop Cloud SQL Proxy
         if: always()
