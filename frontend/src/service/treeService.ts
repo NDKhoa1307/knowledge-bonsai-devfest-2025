@@ -52,12 +52,15 @@ export const treeService = {
    */
   getTreeById: async (id: string): Promise<GetTreeResponse | null> => {
     try {
-      const response = await api.get<GetTreeResponse>(`/trees/${id}`);
+      // Before calling the API, get the newest tree id from localStorage if available
+      const localTreeData = localStorage.getItem(`lastTreeId`);
+      const idToUse = localTreeData ? localTreeData : id;
+      const response = await api.get<GetTreeResponse>(`/trees/${idToUse}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching tree by ID:', error);
+      return null;
     }
-    return null;
   },
 
   /**

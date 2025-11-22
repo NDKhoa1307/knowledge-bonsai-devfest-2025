@@ -1,6 +1,4 @@
 import { useTreeData } from "@/hooks/useTreeData";
-import SVGProvider from "../../components/Trees/SVGProvider";
-import { sampleNodes, sampleEdges } from "../../data/SampleBonsai";
 import { edgeTypes } from "../../types/EdgeTypes";
 import { nodeTypes } from "../../types/NodeTypes";
 import { useCallback, useEffect, useState } from "react";
@@ -14,22 +12,28 @@ import {
   MiniMap,
   Panel,
   ReactFlow,
+  type Node,
   type OnConnect,
   type OnEdgesChange,
   type OnNodesChange,
 } from "reactflow";
-import { mockFrontendTree, type BackendTreeResponse, type KnowledgeTreeData } from "@/data/mockData";
-import axios from "axios";
+import { mockFrontendTree, type KnowledgeTreeData } from "@/data/mockData";
+import { Quiz } from "../Quiz";
 import { treeService, type GetTreeResponse } from "@/service";
+import { RegenerateTreePage } from "./RegenerateTreePage";
+import { NodeInformationPage } from "./NodeInformationPage";
+import { nodeService, type NodeInfoExtractedResponse } from "@/service/nodeService";
 
 function TreePage() {
   const [fetchedTreeData, setFetchedTreeData] = useState<KnowledgeTreeData | null>(null);
   const [metadata, setMetadata] = useState<GetTreeResponse | null>(null);
   const { dataNodes, dataEdges } = useTreeData(fetchedTreeData);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [isNodeInfoOpen, setIsNodeInfoOpen] = useState(false);
 
   useEffect(() => {
     const fetchTree = async () => {
-      const response = await treeService.getTreeById("1");
+      const response = await treeService.getTreeById("6");
       console.log("Fetched tree response:", response);
       if (response) {
         if (response.treeData == null) {
@@ -83,6 +87,23 @@ function TreePage() {
     });
   }, []);
 
+  const onNodeClick = async (event: React.MouseEvent, node: Node) => {
+    console.log("Clicked node:", node);
+    setIsNodeInfoOpen(true);
+    setSelectedNode(node);
+  };
+
+  const fetchNodeInfo = async (treeId: string, nodeId: string): Promise<NodeInfoExtractedResponse | null> => {
+    const result = await nodeService.getNodeInfo(metadata?.id ?? "-1", nodeId);
+    if (result) {
+      console.log("Fetched node info:", result);
+      return result;
+    } else {
+      console.warn("No node info found for node ID:", nodeId);
+      return null;
+    }
+  };
+
   return (
     <div style={{ height: "100%", width: "100%" }}>
       <ReactFlow
@@ -90,6 +111,7 @@ function TreePage() {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
@@ -105,10 +127,36 @@ function TreePage() {
             "Somebody's bonsai"
           )}
         </Panel>
+
+        {/* Quiz Button in Top Right Corner */}
+        <Panel position="top-right" style={{ margin: 10 }}>
+          <Quiz />
+        </Panel>
+
+        {/* <Panel position="bottom-center" style={{ margin: 10 }}>
+          <RegenerateTreePage
+            onTreeGenerated={(tree) => {
+              console.log("🌳 New tree generated:", tree);
+              setFetchedTreeData(tree);
+            }}
+          />
+        </Panel> */}
+
         <Background />
         <Controls />
         <MiniMap />
       </ReactFlow>
+      {
+        /* Node Information Drawer */
+        isNodeInfoOpen && (
+          <NodeInformationPage
+            open={isNodeInfoOpen}
+            onClose={() => setIsNodeInfoOpen(false)}
+            nodeTitle={selectedNode?.data?.label}
+            fetchNodeInfo={() => fetchNodeInfo(metadata?.id ?? "-1", selectedNode?.data?.nodeId ?? "-1")}
+          />
+        )
+      }
     </div>
   );
 }

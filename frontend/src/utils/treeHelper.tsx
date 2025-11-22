@@ -172,8 +172,8 @@ export function finalPolish(nodes: Node[]) {
     const dy = Math.abs(curr.position.y - prev.position.y);
 
     if (dx < MIN_HORIZONTAL_SPACING && dy < LEAF_VERTICAL_SPACING) {
-      curr.position.x -= (MIN_HORIZONTAL_SPACING - dx) * 0.5; // Reduced from 0.7
-      curr.position.y -= (LEAF_VERTICAL_SPACING - dy) * 0.6; // Much gentler for left side
+      curr.position.x -= (MIN_HORIZONTAL_SPACING - dx) * 1; // Reduced from 0.5
+      curr.position.y -= (LEAF_VERTICAL_SPACING - dy) * 1; // Much gentler for left side
     }
   }
 
@@ -186,8 +186,43 @@ export function finalPolish(nodes: Node[]) {
     const dy = Math.abs(curr.position.y - prev.position.y);
 
     if (dx < MIN_HORIZONTAL_SPACING && dy < LEAF_VERTICAL_SPACING) {
-      curr.position.x += (MIN_HORIZONTAL_SPACING - dx) * 0.5; // Reduced from 0.7
-      curr.position.y -= (LEAF_VERTICAL_SPACING - dy) * 0.6; // Match left side
+      curr.position.x += (MIN_HORIZONTAL_SPACING - dx) * 1; // Reduced from 0.5
+      curr.position.y -= (LEAF_VERTICAL_SPACING - dy) * 1; // Match left side
     }
   }
+}
+
+export function enforceLeafVerticalSpacing(nodes: Node[]) {
+  const LEAF_SPACING = 80; // px between leaves
+  const TRUNK_CLEARANCE = 120;
+
+  // Step 1: collect leaves
+  const leafNodes = nodes.filter((n) => n.type === "leaf");
+
+  if (leafNodes.length === 0) return;
+
+  // Step 2: sort leaves by X (left to right)
+  leafNodes.sort((a, b) => a.position.x - b.position.x);
+
+  // Step 3: enforce vertical spacing
+  for (let i = 1; i < leafNodes.length; i++) {
+    const prev = leafNodes[i - 1];
+    const curr = leafNodes[i];
+
+    const dy = Math.abs(curr.position.y - prev.position.y);
+    if (dy < LEAF_SPACING) {
+      const needed = LEAF_SPACING - dy;
+      curr.position.y = prev.position.y - needed; // stack upward
+    }
+  }
+
+  // Step 4: highest leaf = smallest Y
+  const highestLeafY = Math.min(...leafNodes.map((n) => n.position.y));
+
+  // Step 5: push ALL trunks above the highest leaf
+  nodes.forEach((n) => {
+    if (n.type === "trunk") {
+      n.position.y = highestLeafY - TRUNK_CLEARANCE;
+    }
+  });
 }

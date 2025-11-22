@@ -1,5 +1,5 @@
 // mockData.ts - Data structure for Knowledge Bonsai Tree
-import { addNaturalRandomness, finalPolish, resolveAllLevels } from '@/utils/treeHelper';
+import { addNaturalRandomness, enforceLeafVerticalSpacing, finalPolish, resolveAllLevels } from '@/utils/treeHelper';
 import { type Node, type Edge } from 'reactflow';
 
 /**
@@ -54,6 +54,7 @@ export const mockFrontendTree: KnowledgeTreeData = {
             children: [
               { id: 'div-class', label: 'class', type: 'leaf', level: 3 },
               { id: 'div-id', label: 'id', type: 'leaf', level: 3 },
+              { id: 'div-style', label: 'style', type: 'leaf', level: 3 },
             ],
           },
           {
@@ -63,7 +64,9 @@ export const mockFrontendTree: KnowledgeTreeData = {
             level: 2,
             children: [
               { id: 'span-inline', label: 'inline', type: 'leaf', level: 3 },
-              { id: 'span-block', label: 'block', type: 'leaf', level: 3 }
+              { id: 'span-block', label: 'block', type: 'leaf', level: 3 },
+              { id: 'span-style', label: 'style', type: 'leaf', level: 3 },
+              { id: 'span-id', label: 'id', type: 'leaf', level: 3 },
             ],
           },
         ],
@@ -151,7 +154,6 @@ export const mockFrontendTree: KnowledgeTreeData = {
     ],
   },
 };
-
 /**
  * Utility function to convert hierarchical tree data to ReactFlow nodes and edges
  */
@@ -162,7 +164,7 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData | null): {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
   const HORIZONTAL_SPACING = 200;
-  const VERTICAL_SPACING = 150;
+  const VERTICAL_SPACING = 200;
   const BRANCH_SPACING = 170;
 
   function processNode(
@@ -177,12 +179,12 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData | null): {
       id: nodeData.id,
       type: nodeData.type,
       position: { x: xPosition, y: yPosition }, // Starting position
-      data: { label: nodeData.label },
+      data: { label: nodeData.label, nodeId: nodeData.id, nodeType: nodeData.type },
     };
 
     // Check if the node is on the right side, if so, use the right side node type instead
     if (parentHandle === 'right' && nodeData.type === 'branch') {
-      console.log('Changing branch to branchRight for node:', nodeData.id);
+      // console.log('Changing branch to branchRight for node:', nodeData.id);
       rootNode.type = 'branchRight';
     }
     // If the node is at the root center it by adding a offset
@@ -193,7 +195,7 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData | null): {
 
     // Create edge any previous parent to this node
     if (parentId) {
-      console.log('Creating edge from', parentId, 'to', nodeData.id);
+      // console.log('Creating edge from', parentId, 'to', nodeData.id);
 
       // Default source handle for vertical connections
       let sourceHandle = 'top';
@@ -208,29 +210,29 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData | null): {
         targetHandle = 'left';
       }
 
-      console.log('Node data:', {
-        nodeData,
-        parentId,
-        nodeId: nodeData.id,
-        xPosition,
-        yPosition,
-        parentHandle,
-        sourceHandle,
-        targetHandle,
-      });
+      // console.log('Node data:', {
+      //   nodeData,
+      //   parentId,
+      //   nodeId: nodeData.id,
+      //   xPosition,
+      //   yPosition,
+      //   parentHandle,
+      //   sourceHandle,
+      //   targetHandle,
+      // });
 
       const edgeId = `e-${parentId}-${nodeData.id}`;
-      console.log('Edge being pushed:', {
-        id: edgeId,
-        source: parentId,
-        sourceHandle,
-        target: nodeData.id,
-        targetHandle,
-        edgeId: edgeId,
-        currentChild: nodeData,
-        childId: nodeData.id,
-        parentId: parentId,
-      })
+      // console.log('Edge being pushed:', {
+      //   id: edgeId,
+      //   source: parentId,
+      //   sourceHandle,
+      //   target: nodeData.id,
+      //   targetHandle,
+      //   edgeId: edgeId,
+      //   currentChild: nodeData,
+      //   childId: nodeData.id,
+      //   parentId: parentId,
+      // })
 
       edges.push({
         id: `e-${parentId}-${nodeData.id}`,
@@ -241,7 +243,6 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData | null): {
         type: nodeData.type === 'trunk' ? 'trunk' : 'branch',
       });
     }
-
     // Process children
     if (nodeData.children && nodeData.children.length > 0) {
       const childCount = nodeData.children.length;
@@ -250,7 +251,7 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData | null): {
         // Pot: children grow vertically upward
         nodeData.children.forEach((child, index) => {
           const childY = yPosition - VERTICAL_SPACING * (index + 1);
-          console.log('Processing node from pot:', nodeData)
+          // console.log('Processing node from pot:', nodeData)
           processNode(child, nodeData.id, xPosition, childY, 'top');
         });
       } else if (nodeData.type === 'trunk' && childCount > 0) {
@@ -271,11 +272,10 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData | null): {
         });
       } else {
         // This shit is processing branch
-        console.log('[Location]:', {
-          nodeData: nodeData,
-          parentHandle: parentHandle,
-
-        });
+        // console.log('[Location]:', {
+        //   nodeData: nodeData,
+        //   parentHandle: parentHandle,
+        // });
         nodeData.children.forEach((child, index) => {
           let childX = parentHandle
             ? xPosition - HORIZONTAL_SPACING
@@ -285,12 +285,14 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData | null): {
               ? xPosition + HORIZONTAL_SPACING
               : xPosition - HORIZONTAL_SPACING;
           }
-          console.log('[Location] Processing leaf children:', {
-            nodeId: nodeData.id,
-            childId: child.id,
-            parentHandle: parentHandle,
-            childX: childX
-          });
+          yPosition += 50;
+
+          // console.log('[Location] Processing leaf children:', {
+          //   nodeId: nodeData.id,
+          //   childId: child.id,
+          //   parentHandle: parentHandle,
+          //   childX: childX
+          // });
           processNode(child, nodeData.id, childX, yPosition, parentHandle);
         });
       }
@@ -304,7 +306,7 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData | null): {
   // resolveAllLevels(nodes);
   // addNaturalRandomness(nodes);
   finalPolish(nodes);
-
+  // enforceLeafVerticalSpacing(nodes);
   return { nodes, edges };
 }
 

@@ -1,3 +1,4 @@
+import type { Message } from '@/page';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
@@ -7,15 +8,25 @@ export interface SendMessageRequest {
   content: {
     text: string;
   };
+  history: Message[];
 }
 
 export interface SendMessageResponse {
   success?: boolean;
   message?: string;
   data?: any;
-  tree?: any;
+  treeData?: Metadata;
   [key: string]: any;
 }
+
+export interface Metadata {
+  title: string;
+  description: string;
+  createdAt: string;       // ISO datetime string
+  needMoreInfo: boolean;
+  additionalInfo: string;
+}
+
 
 /**
  * Sends a chat message to the backend API
@@ -25,13 +36,15 @@ export interface SendMessageResponse {
  */
 export const sendChatMessage = async (
   username: string,
-  text: string
+  text: string,
+  userMessages: Message[]
 ): Promise<SendMessageResponse> => {
   const payload: SendMessageRequest = {
     username,
     content: {
       text,
     },
+    history: userMessages,
   };
 
   try {

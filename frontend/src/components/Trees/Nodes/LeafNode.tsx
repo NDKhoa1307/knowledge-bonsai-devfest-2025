@@ -156,7 +156,7 @@ function LeafNode({ data }: Props) {
         }}
       />
 
-      {/* Optional: Add CSS for hover animation */}
+      {/* Optional: Add CSS for hover animation
       <style>{`
         .group:hover {
           transform: rotate(-12deg) scale(1.05) !important;
@@ -165,7 +165,7 @@ function LeafNode({ data }: Props) {
             inset -2px -2px 8px rgba(0, 0, 0, 0.15),
             inset 2px 2px 10px rgba(255, 255, 255, 0.3) !important;
         }
-      `}</style>
+      `}</style> */}
     </div>
   );
 }
