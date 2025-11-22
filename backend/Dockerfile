@@ -6,11 +6,14 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 COPY prisma ./prisma/
 
+# Debug: verify prisma files exist
+RUN ls -la ./prisma/ && cat ./prisma/schema.prisma
+
 # Install all dependencies
 RUN yarn install --frozen-lockfile
 
 # Generate Prisma client
-RUN yarn prisma:g
+RUN yarn prisma generate
 
 # Copy the rest of the application code
 COPY . .
@@ -29,8 +32,11 @@ WORKDIR /app
 # Copy package files
 COPY package.json yarn.lock ./
 
-# Copy prisma schema from source (not builder)
-COPY prisma ./prisma/
+# Copy entire prisma directory from builder (includes schema + migrations)
+COPY --from=builder /app/prisma ./prisma/
+
+# Debug: verify prisma files exist in production
+RUN ls -la ./prisma/ && cat ./prisma/schema.prisma
 
 # Install production dependencies
 RUN yarn install --frozen-lockfile --production
@@ -43,9 +49,6 @@ RUN yarn prisma generate
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
-
-# Verify prisma schema exists (for debugging)
-RUN ls -la /app/prisma/
 
 EXPOSE 8080
 
