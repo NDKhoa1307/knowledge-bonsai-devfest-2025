@@ -49,9 +49,9 @@ jobs:
             --image=${{ env.BE_FULL_IMAGE_PATH }} \
             --region=${{ env.REGION }} \
             --set-cloudsql-instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME }} \
-            --set-env-vars=DATABASE_URL=${{ secrets.DATABASE_URL }} \
+            --set-env-vars=DATABASE_URL=${{ secrets.PROXY_DB_MIGRATION }} \
             --command=yarn \
-            --args=prisma,migrate,deploy \
+            --args=prisma,migrate,deploy,--schema=./prisma/schema.prisma \
             --max-retries=1 \
             --task-timeout=10m \
             2>/dev/null || true
