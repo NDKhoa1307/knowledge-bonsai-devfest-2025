@@ -1,4 +1,5 @@
 export * from './HomePage';
+export * from './WelcomePage';
 export * from './GraphPage';
 export * from './NodesPage';
 export * from './UsersPage';

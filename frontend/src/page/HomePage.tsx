@@ -1,60 +1,141 @@
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Input, Card, Typography, Spin, Empty } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
+import { treeService, type TreeListItem } from "../service";
+
+const { Title, Text } = Typography;
+
 export const HomePage = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [trees, setTrees] = useState<TreeListItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+
+  useEffect(() => {
+    // Check if username exists in localStorage
+    const username = localStorage.getItem("username");
+    if (!username) {
+      // If no username, redirect to welcome page
+      navigate("/welcome", { replace: true });
+      return;
+    }
+
+    // Load trees
+    loadTrees();
+  }, [navigate]);
+
+  useEffect(() => {
+    // Load trees when search query changes
+    const searchTerm = searchParams.get("search") || "";
+    setSearchQuery(searchTerm);
+    loadTrees(searchTerm);
+  }, [searchParams]);
+
+  const loadTrees = async (search?: string) => {
+    setLoading(true);
+    try {
+      const data = await treeService.getAllTrees(search);
+      setTrees(data);
+    } catch (error) {
+      console.error("Error loading trees:", error);
+      setTrees([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (value: string) => {
+    if (value.trim()) {
+      setSearchParams({ search: value.trim() });
+    } else {
+      setSearchParams({});
+    }
+  };
+
+  const handleTreeClick = (treeId: number) => {
+    navigate(`/trees/${treeId}`);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   return (
     <div className="h-full overflow-auto p-6 space-y-6">
       <div>
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">
+        <Title level={2} className="mb-2!">
           Welcome to Knowledge Bonsai
-        </h2>
-        <p className="text-gray-600">
-          Cultivate and visualize your knowledge graph
-        </p>
+        </Title>
+        <Text type="secondary">
+          Browse and explore knowledge trees created by the community
+        </Text>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Stats Cards */}
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Nodes</p>
-              <p className="text-3xl font-bold text-gray-800">0</p>
-            </div>
-            <span className="text-4xl">📦</span>
-          </div>
-        </div>
+      {/* Search Bar */}
+      <Card className="border border-gray-200">
+        <Input
+          size="large"
+          placeholder="Search trees by title or owner name..."
+          prefix={<SearchOutlined />}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onPressEnter={(e) => handleSearch(e.currentTarget.value)}
+          allowClear
+          onClear={() => {
+            setSearchQuery("");
+            setSearchParams({});
+          }}
+        />
+      </Card>
 
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Connections</p>
-              <p className="text-3xl font-bold text-gray-800">0</p>
-            </div>
-            <span className="text-4xl">🔗</span>
-          </div>
+      {/* Trees Grid */}
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <Spin size="large" />
         </div>
-
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Users</p>
-              <p className="text-3xl font-bold text-gray-800">0</p>
-            </div>
-            <span className="text-4xl">👥</span>
-          </div>
+      ) : trees.length === 0 ? (
+        <Card>
+          <Empty
+            description={
+              searchQuery
+                ? "No trees found matching your search"
+                : "No trees available"
+            }
+          />
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {trees.map((tree) => (
+            <Card
+              key={tree.id}
+              hoverable
+              className="cursor-pointer border border-gray-200 transition-shadow hover:shadow-lg"
+              onClick={() => handleTreeClick(tree.id)}
+            >
+              <div className="space-y-3">
+                <Title level={4} className="mb-2! text-gray-800!">
+                  {tree.title}
+                </Title>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span>👤</span>
+                  <Text type="secondary">{tree.owner.name}</Text>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>Created: {formatDate(tree.createdAt)}</span>
+                  <span>Updated: {formatDate(tree.updatedAt)}</span>
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-            Create New Node
-          </button>
-          <button className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition">
-            View Knowledge Graph
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

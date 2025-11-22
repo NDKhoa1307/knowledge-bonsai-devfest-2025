@@ -12,12 +12,13 @@ import { type Node, type Edge } from 'reactflow';
  */
 
 export interface TreeListItem {
-  id: string;
+  id: number;
+  ownerId: number;
   title: string;
-  description?: string;
+  bucket_url: string;
   createdAt: string;
   updatedAt: string;
-  nodeCount?: number;
+  owner: TreeOwner;
 }
 
 export interface TreeOwner {
@@ -42,8 +43,9 @@ export const treeService = {
   /**
    * Get all trees
    */
-  getAllTrees: async (): Promise<TreeListItem[]> => {
-    const response = await api.get<TreeListItem[]>('/trees');
+  getAllTrees: async (search?: string): Promise<TreeListItem[]> => {
+    const params = search ? { search } : {};
+    const response = await api.get<TreeListItem[]>('/trees', { params });
     return response.data;
   },
 
@@ -166,11 +168,11 @@ export const treeService = {
   },
 
   /**
-   * Search trees
+   * Search trees by title or owner name
    */
   searchTrees: async (query: string): Promise<TreeListItem[]> => {
-    const response = await api.get<TreeListItem[]>('/trees/search', {
-      params: { q: query },
+    const response = await api.get<TreeListItem[]>('/trees', {
+      params: { search: query },
     });
     return response.data;
   },

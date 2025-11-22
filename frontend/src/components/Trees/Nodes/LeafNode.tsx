@@ -10,23 +10,23 @@ function LeafNode({ data }: Props) {
   return (
     <div className="relative">
       {/* Leaf shape container with enhanced styling */}
-<div
-          className="relative flex items-center justify-center group cursor-pointer"
-          style={{
-            width: "169px",
-            height: "65px",
-            background: "linear-gradient(135deg, #bbf7d0 0%, #4ade80 30%, #22c55e 60%, #16a34a 100%)",
-            borderRadius: "0% 80% 50% 80%",
-            boxShadow: `
+      <div
+        className="relative flex items-center justify-center group cursor-pointer"
+        style={{
+          width: "169px",
+          height: "65px",
+          background: "linear-gradient(135deg, #bbf7d0 0%, #4ade80 30%, #22c55e 60%, #16a34a 100%)",
+          borderRadius: "0% 80% 50% 80%",
+          boxShadow: `
               0 4px 12px rgba(34, 197, 94, 0.3),
               inset -2px -2px 8px rgba(0, 0, 0, 0.1),
               inset 2px 2px 8px rgba(255, 255, 255, 0.2)
             `,
-            transform: "rotate(-15deg)",
-            border: "1px solid rgba(255, 255, 255, 0.3)",
-            transition: "all 0.3s ease",
-          }}
-        >
+          transform: "rotate(-15deg)",
+          border: "1px solid rgba(255, 255, 255, 0.3)",
+          transition: "all 0.3s ease",
+        }}
+      >
 
         {/* Central vein (midrib) */}
         <div
