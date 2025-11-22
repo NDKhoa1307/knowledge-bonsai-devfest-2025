@@ -49,7 +49,7 @@ export const QuizQuestion = ({
             return (
               <label
                 key={index}
-                className={`relative flex items-center p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 group
+                className={`relative flex items-center p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200
                   ${isSelected 
                     ? 'border-emerald-500 bg-emerald-50/50 shadow-sm ring-1 ring-emerald-500' 
                     : 'border-stone-100 bg-white hover:border-emerald-200 hover:bg-stone-50'
@@ -74,7 +74,7 @@ export const QuizQuestion = ({
                 {/* Answer Text */}
                 <div className="flex-1">
                   <Text 
-                    className={`text-base font-medium transition-colors duration-200
+                    className={`text-base font-medium
                       ${isSelected ? 'text-emerald-900' : 'text-stone-600'}
                     `}
                   >
