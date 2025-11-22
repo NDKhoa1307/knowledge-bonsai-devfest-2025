@@ -11,8 +11,8 @@ RUN npm ci
 COPY . .
 
 # Set environment variable at BUILD time
-ARG VITE_BASE_URL
-ENV VITE_BASE_URL=${VITE_BASE_URL}
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 # Build the application (skip type checking)
 RUN npm run build:skip-typecheck || vite build --mode production
