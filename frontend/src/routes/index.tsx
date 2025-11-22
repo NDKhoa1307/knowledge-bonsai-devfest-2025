@@ -18,7 +18,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "graph",
-        element: <GraphPage />,
+        element: <TreePage />,
       },
       {
         path: "nodes",

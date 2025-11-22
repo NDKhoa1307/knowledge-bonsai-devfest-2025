@@ -1,5 +1,4 @@
 name: Backend deployment to Cloud Run
-
 on:
   push:
     branches:
@@ -7,7 +6,6 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/deploy-backend.yaml'
-
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: ${{ secrets.GCP_REGION }}
@@ -15,45 +13,60 @@ env:
   IMAGE_NAME: ${{ secrets.BACKEND_IMAGE_NAME }}
   SERVICE_NAME: ${{ secrets.BACKEND_SERVICE_NAME }}
   IMAGE_TAG: ${{ github.sha }}
-
 jobs:
   deploy-backend:
     runs-on: ubuntu-latest
-
     permissions:
       contents: 'read'
       id-token: 'write'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      
       - name: Authenticate to Google Cloud
         id: 'auth-gcloud'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-
+      
       - name: Configure Docker 
         run: |
           gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
-
+      
       - name: Build and Tag Image
         run: |
           BE_FULL_IMAGE_PATH="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
           echo "BE_FULL_IMAGE_PATH=$BE_FULL_IMAGE_PATH" >> $GITHUB_ENV
           docker build -t "$BE_FULL_IMAGE_PATH" ./backend
-
+      
       - name: Push Image to Artifact Registry
         run: |
           docker push "$BE_FULL_IMAGE_PATH"
-
+      
+      - name: Run Database Migrations via Cloud Run Job
+        run: |
+          gcloud run jobs create ${{ env.SERVICE_NAME }}-migration \
+            --image=${{ env.BE_FULL_IMAGE_PATH }} \
+            --region=${{ env.REGION }} \
+            --set-cloudsql-instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME }} \
+            --set-env-vars=DATABASE_URL=${{ secrets.DATABASE_URL }} \
+            --command=yarn \
+            --args=prisma,migrate,deploy \
+            --max-retries=1 \
+            --task-timeout=10m \
+            2>/dev/null || true
+          
+          gcloud run jobs execute ${{ env.SERVICE_NAME }}-migration \
+            --region=${{ env.REGION }} \
+            --wait
+      
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           image: ${{ env.BE_FULL_IMAGE_PATH }}
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
-          cloud-sql-instances: ${{ secrets.CLOUD_SQL_CONNECTION_NAME }}
+          flags: '--port=8080 --allow-unauthenticated --add-cloudsql-instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME }}'
           env_vars: |
             DATABASE_URL=${{ secrets.DATABASE_URL }}
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}

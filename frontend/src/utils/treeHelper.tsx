@@ -51,7 +51,7 @@ export function resolveAllLevels(nodes: Node[]) {
   const levels: Record<number, Node[]> = {};
 
   nodes.forEach((n) => {
-    if (isRigidNode(n)) return; // pot + trunk completely fixed
+    if (isRigidNode(n)) return; // pot + trunk + branches completely fixed
 
     // Group by Y position with tighter grouping for better collision detection
     const yKey = Math.round(n.position.y / 20);
@@ -61,6 +61,31 @@ export function resolveAllLevels(nodes: Node[]) {
 
   // Resolve collisions for each level
   Object.values(levels).forEach(resolveCollisions);
+
+  // Additional pass: Check for leaf-branch collisions across different Y levels
+  const leafNodes = nodes.filter((n) => n.type === "leaf");
+  const branchNodes = nodes.filter((n) => n.type === "branch" || n.type === "branchRight");
+
+  leafNodes.forEach((leaf) => {
+    branchNodes.forEach((branch) => {
+      const dx = Math.abs(leaf.position.x - branch.position.x);
+      const dy = Math.abs(leaf.position.y - branch.position.y);
+
+      // If too close, move leaf away (increased detection range)
+      if (dx < 120 && dy < 90) {
+        // Determine which side of trunk the leaf is on
+        const isLeftSide = leaf.position.x < 0;
+
+        // Move leaf AWAY from trunk (outward)
+        // Left side: push more left (negative)
+        // Right side: push more right (positive)
+        const horizontalShift = isLeftSide ? -50 : 50;
+
+        leaf.position.x += horizontalShift;
+        leaf.position.y -= 30; // Reduced from 50 to be more gentle
+      }
+    });
+  });
 }
 
 export function addNaturalRandomness(nodes: Node[]) {
@@ -72,19 +97,15 @@ export function addNaturalRandomness(nodes: Node[]) {
       case "branch":
       case "branchRight":
         // Branch: subtle horizontal sway, slight upward curve
-        jitterX = (Math.random() - 0.5) * 50;
+        // jitterX = (Math.random() - 0.5) * 50;
         // Very slight upward tendency for branches (natural growth)
         jitterY = -5 - Math.random() * 15; // -5 to -20
         break;
 
-      case "leaf": { // Leaf: more pronounced horizontal sway
+      case "leaf": {
         jitterX = (Math.random() - 0.5) * 80; // -40 to +40
 
-        // Strong upward sway with natural variation
-        // Base upward movement: -20 to -60 (mostly up)
         const baseUpward = -20 - Math.random() * 40;
-
-        // Add occasional extra lift for some leaves (30% chance)
         const extraLift = Math.random() < 0.3 ? -20 : 0;
 
         jitterY = baseUpward + extraLift; // Result: -20 to -80 (all upward)
@@ -104,29 +125,69 @@ export function addNaturalRandomness(nodes: Node[]) {
 // Additional utility: Apply final polish to prevent any remaining overlaps
 export function finalPolish(nodes: Node[]) {
   const leafNodes = nodes.filter((n) => n.type === "leaf");
+  const allNonLeafNodes = nodes.filter((n) => n.type !== "leaf");
 
-  // Sort by X position
-  leafNodes.sort((a, b) => a.position.x - b.position.x);
+  // Check each leaf against ALL other nodes (especially branches)
+  leafNodes.forEach((leaf) => {
+    // Determine which side of the trunk this leaf is on
+    const isLeftSide = leaf.position.x < -65;
 
-  // Final pass: ensure no leaves are too close
-  for (let i = 1; i < leafNodes.length; i++) {
-    const prev = leafNodes[i - 1];
-    const curr = leafNodes[i];
+    allNonLeafNodes.forEach((other) => {
+      const dx = Math.abs(leaf.position.x - other.position.x);
+      const dy = Math.abs(leaf.position.y - other.position.y);
+
+      // Define collision zones based on node types
+      const minHorizontalDistance = 120; // Increased from 100
+      const minVerticalDistance = 90; // Increased from 80
+
+      // If leaf is too close to another node, push it away
+      if (dx < minHorizontalDistance && dy < minVerticalDistance) {
+        // Calculate push amounts
+        const horizontalPush = (minHorizontalDistance - dx) * 0.8; // Increased from 0.6
+        const verticalPush = (minVerticalDistance - dy) * 1.6; // Reduced from 1.8 to be gentler
+
+        // Push AWAY from trunk (outward)
+        if (isLeftSide) {
+          leaf.position.x -= horizontalPush; // Push more left
+        } else {
+          leaf.position.x += horizontalPush; // Push more right
+        }
+
+        // Always push up
+        leaf.position.y -= verticalPush;
+      }
+    });
+  });
+
+  // Separate left and right leaves for better processing
+  const leftLeaves = leafNodes.filter((n) => n.position.x < -65).sort((a, b) => b.position.x - a.position.x); // Sort right to left (closest to trunk first)
+  const rightLeaves = leafNodes.filter((n) => n.position.x >= -65).sort((a, b) => a.position.x - b.position.x); // Sort left to right (closest to trunk first)
+
+  // Process left side leaves
+  for (let i = 1; i < leftLeaves.length; i++) {
+    const prev = leftLeaves[i - 1];
+    const curr = leftLeaves[i];
+
+    const dx = Math.abs(curr.position.x - prev.position.x); // Use abs for left side
+    const dy = Math.abs(curr.position.y - prev.position.y);
+
+    if (dx < MIN_HORIZONTAL_SPACING && dy < LEAF_VERTICAL_SPACING) {
+      curr.position.x -= (MIN_HORIZONTAL_SPACING - dx) * 0.5; // Reduced from 0.7
+      curr.position.y -= (LEAF_VERTICAL_SPACING - dy) * 0.6; // Much gentler for left side
+    }
+  }
+
+  // Process right side leaves
+  for (let i = 1; i < rightLeaves.length; i++) {
+    const prev = rightLeaves[i - 1];
+    const curr = rightLeaves[i];
 
     const dx = curr.position.x - prev.position.x;
     const dy = Math.abs(curr.position.y - prev.position.y);
 
-    // If leaves are close in both X and Y, push current one up and right
     if (dx < MIN_HORIZONTAL_SPACING && dy < LEAF_VERTICAL_SPACING) {
-      curr.position.x += (MIN_HORIZONTAL_SPACING - dx) * 0.5;
-      curr.position.y -= (LEAF_VERTICAL_SPACING - dy) * 1.2; // More upward push
+      curr.position.x += (MIN_HORIZONTAL_SPACING - dx) * 0.5; // Reduced from 0.7
+      curr.position.y -= (LEAF_VERTICAL_SPACING - dy) * 0.6; // Match left side
     }
   }
 }
-
-// Usage in convertTreeToReactFlow:
-// After: processNode(treeData.root, null, 0, 0);
-// Call in sequence:
-// 1. resolveAllLevels(nodes);      // Fix collisions
-// 2. addNaturalRandomness(nodes);  // Add natural sway
-// 3. finalPolish(nodes);           // Final cleanup pass

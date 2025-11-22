@@ -2,7 +2,7 @@ import { convertTreeToReactFlow, validateTreeData, type KnowledgeTreeData } from
 import { useMemo } from "react";
 
 // useTreeData.ts
-export function useTreeData(data: KnowledgeTreeData) {
+export function useTreeData(data: KnowledgeTreeData | null) {
   return useMemo(() => {
     const result = validateTreeData(data);
     if (!result.valid) {

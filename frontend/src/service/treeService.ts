@@ -1,9 +1,9 @@
 import api from './api';
-import { 
-  type KnowledgeTreeData, 
+import {
+  type KnowledgeTreeData,
   type BackendTreeResponse,
   convertTreeToReactFlow,
-  validateTreeData 
+  validateTreeData
 } from '../data/mockData';
 import { type Node, type Edge } from 'reactflow';
 
@@ -20,6 +20,24 @@ export interface TreeListItem {
   nodeCount?: number;
 }
 
+export interface TreeOwner {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface GetTreeResponse {
+  id: string;
+  ownerId: string;
+  title: string;
+  bucket_url: string;
+  treeData: KnowledgeTreeData | null;    // unknown structure; keep as any or replace with a proper type
+  createdAt: string;       // ISO datetime string
+  updatedAt: string;       // ISO datetime string
+  owner: TreeOwner;
+}
+
+
 export const treeService = {
   /**
    * Get all trees
@@ -32,21 +50,14 @@ export const treeService = {
   /**
    * Get a single tree by ID
    */
-  getTreeById: async (id: string): Promise<KnowledgeTreeData> => {
-    const response = await api.get<BackendTreeResponse>(`/trees/${id}`);
-    
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to fetch tree');
+  getTreeById: async (id: string): Promise<GetTreeResponse | null> => {
+    try {
+      const response = await api.get<GetTreeResponse>(`/trees/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching tree by ID:', error);
     }
-
-    // Validate the tree data
-    const validation = validateTreeData(response.data.data);
-    if (!validation.valid) {
-      console.error('Invalid tree data:', validation.errors);
-      throw new Error('Invalid tree data structure');
-    }
-
-    return response.data.data;
+    return null;
   },
 
   /**
@@ -59,7 +70,7 @@ export const treeService = {
   }> => {
     const treeData = await treeService.getTreeById(id);
     const { nodes, edges } = convertTreeToReactFlow(treeData);
-    
+
     return {
       nodes,
       edges,
@@ -106,8 +117,8 @@ export const treeService = {
    * Add a node to an existing tree
    */
   addNode: async (
-    treeId: string, 
-    parentId: string, 
+    treeId: string,
+    parentId: string,
     nodeData: {
       label: string;
       type: 'trunk' | 'leaf';

@@ -4,11 +4,10 @@ import { CreateTreeDto } from './createTree.dto';
 
 @Controller()
 export class CreateTreeController {
-  constructor(private readonly createTreeService: CreateTreeService) {}
+  constructor(private readonly createTreeService: CreateTreeService) { }
 
   @Post('/trees')
   async createTree(@Body() data: CreateTreeDto): Promise<any> {
-    console.log(data);
     try {
       return await this.createTreeService.createTree(data);
     } catch (error) {

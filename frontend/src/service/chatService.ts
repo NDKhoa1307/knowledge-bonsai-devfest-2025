@@ -55,6 +55,9 @@ export const sendChatMessage = async (
     console.log(' [ChatService] Status:', response.status);
     console.log(' [ChatService] Response data:', response.data);
 
+    // Save to local storage for debugging
+    localStorage.setItem('treeResponse', JSON.stringify(response.data, null, 2));
+
     return response.data;
   } catch (error: any) {
     console.error(' [ChatService] Error sending message:', error);

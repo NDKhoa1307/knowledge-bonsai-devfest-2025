@@ -63,7 +63,7 @@ export const mockFrontendTree: KnowledgeTreeData = {
             level: 2,
             children: [
               { id: 'span-inline', label: 'inline', type: 'leaf', level: 3 },
-              { id: 'span-text', label: 'text', type: 'leaf', level: 3 },
+              { id: 'span-block', label: 'block', type: 'leaf', level: 3 }
             ],
           },
         ],
@@ -81,6 +81,7 @@ export const mockFrontendTree: KnowledgeTreeData = {
             level: 2,
             children: [
               { id: 'grid-template', label: 'template', type: 'leaf', level: 3 },
+              { id: 'grid-template-columns', label: 'template-columns', type: 'leaf', level: 3 },
             ],
           },
           {
@@ -90,6 +91,7 @@ export const mockFrontendTree: KnowledgeTreeData = {
             level: 2,
             children: [
               { id: 'selector-class', label: '.class', type: 'leaf', level: 3 },
+              { id: 'selector-id', label: '#id', type: 'leaf', level: 3 }
             ],
           },
         ],
@@ -153,7 +155,7 @@ export const mockFrontendTree: KnowledgeTreeData = {
 /**
  * Utility function to convert hierarchical tree data to ReactFlow nodes and edges
  */
-export function convertTreeToReactFlow(treeData: KnowledgeTreeData): {
+export function convertTreeToReactFlow(treeData: KnowledgeTreeData | null): {
   nodes: Node[];
   edges: Edge[];
 } {
@@ -296,9 +298,11 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData): {
   }
 
   // Start from the root (pot) at the bottom center
-  processNode(treeData.root, null, 0, 0);
-  resolveAllLevels(nodes);
-  addNaturalRandomness(nodes);
+  if (treeData != null) {
+    processNode(treeData.root, null, 0, 0);
+  }
+  // resolveAllLevels(nodes);
+  // addNaturalRandomness(nodes);
   finalPolish(nodes);
 
   return { nodes, edges };
@@ -398,7 +402,7 @@ export const mockBackendTree: KnowledgeTreeData = {
 /**
  * Helper function to validate tree data structure
  */
-export function validateTreeData(data: KnowledgeTreeData): {
+export function validateTreeData(data: KnowledgeTreeData | null): {
   valid: boolean;
   errors: string[];
 } {
@@ -421,7 +425,7 @@ export function validateTreeData(data: KnowledgeTreeData): {
     }
   }
 
-  if (!data.root) {
+  if (data == null || !data.root) {
     errors.push('Missing root node');
   } else {
     validateNode(data.root, 'root');

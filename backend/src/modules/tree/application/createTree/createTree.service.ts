@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@db/services';
 import { CreateTreeDto } from './createTree.dto';
 import { KnowledgeTreeDataSchema } from './createTree.schema';
+import { createTreeSystemPrompt as system_prompt } from '../../prompts';
 
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -43,6 +44,7 @@ export class CreateTreeService {
       config: {
         responseMimeType: 'application/json',
         responseJsonSchema: jsonSchema,
+        systemInstruction: system_prompt,
       },
     });
 

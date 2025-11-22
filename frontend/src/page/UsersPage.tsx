@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { userService, type User } from '../service';
+import { useEffect, useState } from "react";
+import { userService, type User } from "../service";
 
 export const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -17,7 +17,7 @@ export const UsersPage = () => {
       setUsers(data);
       setError(null);
     } catch (err) {
-      setError('Failed to load users');
+      setError("Failed to load users");
       console.error(err);
     } finally {
       setLoading(false);
@@ -35,9 +35,7 @@ export const UsersPage = () => {
   if (error) {
     return (
       <div className="h-full p-6">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{error}</div>
       </div>
     );
   }
@@ -85,25 +83,17 @@ export const UsersPage = () => {
                 {users.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {user.name || 'N/A'}
-                      </div>
+                      <div className="text-sm font-medium text-gray-900">{user.name || "N/A"}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">{user.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </div>
+                      <div className="text-sm text-gray-500">{new Date(user.createdAt).toLocaleDateString()}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button className="text-indigo-600 hover:text-indigo-900 mr-3">
-                        Edit
-                      </button>
-                      <button className="text-red-600 hover:text-red-900">
-                        Delete
-                      </button>
+                      <button className="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                      <button className="text-red-600 hover:text-red-900">Delete</button>
                     </td>
                   </tr>
                 ))}
@@ -115,4 +105,3 @@ export const UsersPage = () => {
     </div>
   );
 };
-
