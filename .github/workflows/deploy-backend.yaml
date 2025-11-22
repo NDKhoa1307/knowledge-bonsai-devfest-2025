@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - feat/backend-deployment
     paths:
       - 'backend/**'
       - '.github/workflows/deploy-backend.yaml'
@@ -46,11 +47,16 @@ jobs:
         run: |
           docker push "$BE_FULL_IMAGE_PATH"
       
-      - name: Install Cloud SQL Proxy
+      - name: Install Cloud SQL Proxy and PostgreSQL Client
         run: |
+          # Install Cloud SQL Proxy
           curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.8.0/cloud-sql-proxy.linux.amd64
           chmod +x cloud-sql-proxy
           sudo mv cloud-sql-proxy /usr/local/bin/
+          
+          # Install PostgreSQL client for pg_isready
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
       
       - name: Start Cloud SQL Proxy
         run: |
@@ -58,17 +64,23 @@ jobs:
           PROXY_PID=$!
           echo "PROXY_PID=$PROXY_PID" >> $GITHUB_ENV
           
-          # Wait for proxy to be ready
+          # Wait for proxy to be ready with proper connection testing
           echo "Waiting for Cloud SQL Proxy to be ready..."
-          for i in {1..30}; do
-            if pg_isready -h localhost -p 5432 > /dev/null 2>&1; then
-              echo "Cloud SQL Proxy is ready!"
+          max_attempts=30
+          attempt=0
+          
+          while [ $attempt -lt $max_attempts ]; do
+            if pg_isready -h localhost -p 5432 -U postgres > /dev/null 2>&1; then
+              echo "✓ Cloud SQL Proxy is ready!"
               break
             fi
-            if [ $i -eq 30 ]; then
-              echo "Timeout waiting for Cloud SQL Proxy"
+            attempt=$((attempt + 1))
+            if [ $attempt -eq $max_attempts ]; then
+              echo "✗ Timeout waiting for Cloud SQL Proxy"
+              kill $PROXY_PID || true
               exit 1
             fi
+            echo "Attempt $attempt/$max_attempts - waiting..."
             sleep 2
           done
         env:
@@ -77,19 +89,19 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: backend/yarn.lock
       
       - name: Install dependencies
         working-directory: ./backend
-        run: npm ci
+        run: yarn install --frozen-lockfile
       
       - name: Run Database Migrations
         working-directory: ./backend
         run: |
           echo "Running Prisma migrations..."
-          npx prisma migrate deploy
+          yarn prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_LOCAL_PROXY }}
       
@@ -110,4 +122,3 @@ jobs:
           env_vars: |
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-
