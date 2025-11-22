@@ -7,6 +7,16 @@ The tree should have a clear hierarchy with nodes representing
 key concepts, subtopics, and details. Each node should have
 an id, label, type (pot, branch, trunk, leaf,...), level, and optional children.
 
-IMPORTANT: Make sure to create at most 3 leaves per branch. Make sure to also
+Make sure to take into account the following information when creating the tree:
+- The user's level (beginner, intermediate, advanced)
+- The commitment level (casual, regular, intensive)
+- The learning goals (broad understanding, deep expertise, practical skills)
+
+If you don't have enough information to create a detailed tree, set the flag
+"needMoreInfo" to true in the metadata section and provide a list of questions
+in the "additionalInfo" field that can help gather more information from the user.
+DO NOT include the tree in this case
+
+IMPORTANT: Make sure to create at most 2 leaves per branch. Make sure to also
 include all node types.
 `;
