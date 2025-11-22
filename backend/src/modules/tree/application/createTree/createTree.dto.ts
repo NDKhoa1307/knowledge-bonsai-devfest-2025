@@ -1,4 +1,4 @@
-import { IsString, ValidateNested } from 'class-validator';
+import { IsString, ValidateNested, IsArray } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ContentDto {
@@ -13,4 +13,8 @@ export class CreateTreeDto {
   @ValidateNested()
   @Type(() => ContentDto)
   content: ContentDto;
+
+  @IsArray()
+  @IsString({ each: true })
+  histories: string[];
 }

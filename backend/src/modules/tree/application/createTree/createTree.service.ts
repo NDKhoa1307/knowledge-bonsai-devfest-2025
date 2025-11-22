@@ -22,9 +22,11 @@ export class CreateTreeService {
   async createTree(data: CreateTreeDto): Promise<{ id: string; data: any }> {
     const prompt = data.content.text.trim();
     const username = data.username.trim();
+    const histories = data.histories || [];
 
     const content = await this.generateContent(
       `Create a detailed tree structure based on the following prompt: ${prompt}`,
+      histories,
     );
 
     const newTreeObj = await this.saveTreeToDB(username, content);
@@ -35,14 +37,16 @@ export class CreateTreeService {
     };
   }
 
-  async generateContent(prompt: string): Promise<any> {
+  async generateContent(prompt: string, histories: string[]): Promise<any> {
     const ai = new GoogleGenAI({});
 
     const jsonSchema = zodToJsonSchema(KnowledgeTreeDataSchema);
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: prompt,
+      contents:
+        prompt +
+        `Here are the current chat histories: ${JSON.stringify(histories)}`,
       config: {
         responseMimeType: 'application/json',
         responseJsonSchema: jsonSchema,
@@ -51,6 +55,8 @@ export class CreateTreeService {
     });
 
     const responseText = response.text;
+
+    console.log('🧠 AI Response:', responseText);
 
     if (!responseText) {
       throw new Error('No response from the AI model.');
