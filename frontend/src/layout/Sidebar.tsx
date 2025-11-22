@@ -34,9 +34,9 @@ export const Sidebar = () => {
       label: 'AI Chat',
     },
     {
-      key: '/graph',
+      key: '/trees',
       icon: <ApartmentOutlined />,
-      label: 'Knowledge Graph',
+      label: 'Tree',
     },
     {
       key: '/nodes',

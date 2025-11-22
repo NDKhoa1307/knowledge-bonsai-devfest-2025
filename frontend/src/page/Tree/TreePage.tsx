@@ -1,9 +1,7 @@
 import { useTreeData } from "@/hooks/useTreeData";
-import SVGProvider from "../../components/Trees/SVGProvider";
-import { sampleNodes, sampleEdges } from "../../data/SampleBonsai";
 import { edgeTypes } from "../../types/EdgeTypes";
 import { nodeTypes } from "../../types/NodeTypes";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   addEdge,
   applyEdgeChanges,
@@ -19,6 +17,7 @@ import {
   type OnNodesChange,
 } from "reactflow";
 import { mockFrontendTree } from "@/data/mockData";
+import { Quiz } from "../Quiz";
 
 function TreePage() {
   const { dataNodes, dataEdges } = useTreeData(mockFrontendTree);
@@ -66,6 +65,12 @@ function TreePage() {
         <Panel position="top-center" className="text-black">
           Somebody's bonsai
         </Panel>
+        
+        {/* Quiz Button in Top Right Corner */}
+        <Panel position="top-right" style={{ margin: 10 }}>
+          <Quiz />
+        </Panel>
+        
         <Background />
         <Controls />
         <MiniMap />
