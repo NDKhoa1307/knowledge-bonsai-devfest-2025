@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import { Storage } from '@google-cloud/storage';
+// import { Storage } from '@google-cloud/storage';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@db/services';
 import { CreateTreeDto } from './createTree.dto';
@@ -20,7 +20,7 @@ export class CreateTreeService {
   }
 
   async createTree(data: CreateTreeDto): Promise<string> {
-    const prompt = data.prompt.trim();
+    const prompt = data.content.text.trim();
     const username = data.username.trim();
 
     const content = await this.generateContent(
@@ -74,23 +74,23 @@ export class CreateTreeService {
 
     const title = treeData.metadata.title || 'Untitled Tree';
 
-    const bucket_name = 'knowledge-bonsai';
-    const object_key = `trees/${user.id}/${Date.now()}_tree.json`;
+    // const bucket_name = 'knowledge-bonsai';
+    // const object_key = `trees/${user.id}/${Date.now()}_tree.json`;
 
-    const storage = new Storage();
+    // const storage = new Storage();
 
-    await storage
-      .bucket(bucket_name)
-      .file(object_key)
-      .save(JSON.stringify(treeData), {
-        contentType: 'application/json',
-      });
+    // await storage
+    //   .bucket(bucket_name)
+    //   .file(object_key)
+    //   .save(JSON.stringify(treeData), {
+    //     contentType: 'application/json',
+    //   });
 
     await this.dbContext.tree.create({
       data: {
         ownerId: user.id,
         title: title,
-        bucket_url: object_key,
+        bucket_url: 'TEST_123',
       },
     });
   }
