@@ -13,8 +13,8 @@ function BranchNodeRight({ data }: Props) {
       <div
         className="relative flex items-center justify-center"
         style={{
-          width: "50px",
-          height: "20px",
+          width: "124px",
+          height: "32px",
           background: "linear-gradient(90deg, #92400e 0%, #a16207 50%, #92400e 100%)",
           borderRadius: "20px",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)",
@@ -81,6 +81,7 @@ function BranchNodeRight({ data }: Props) {
         type="source"
         position={Position.Top}
         style={{
+          opacity: 0,
           background: "#22c55e",
           border: "2px solid white",
           width: "8px",
@@ -93,6 +94,7 @@ function BranchNodeRight({ data }: Props) {
         type="source"
         position={Position.Bottom}
         style={{
+          opacity: 0,
           background: "#22c55e",
           border: "2px solid white",
           width: "8px",

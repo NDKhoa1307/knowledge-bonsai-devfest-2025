@@ -47,7 +47,7 @@ export const sendChatMessage = async (
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 30000, // 30 second timeout
+        timeout: 9999999999, // 30 second timeout
       }
     );
 
@@ -58,7 +58,7 @@ export const sendChatMessage = async (
     return response.data;
   } catch (error: any) {
     console.error(' [ChatService] Error sending message:', error);
-    
+
     if (axios.isAxiosError(error)) {
       console.error(' [ChatService] Axios Error Details:', {
         message: error.message,
@@ -80,11 +80,11 @@ export const shouldUseMockMode = (): boolean => {
   const mockModeEnv = import.meta.env.VITE_MOCK_MODE;
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
   const useMockMode = mockModeEnv === 'true';
-  
+
   console.log('🔍 [ChatService] Environment Check:');
   console.log('   - VITE_MOCK_MODE:', mockModeEnv);
   console.log('   - VITE_API_BASE_URL:', apiBaseUrl);
   console.log('   - Using Mock Mode:', useMockMode);
-  
+
   return useMockMode;
 };

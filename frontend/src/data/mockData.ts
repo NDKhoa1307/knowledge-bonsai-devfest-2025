@@ -1,4 +1,5 @@
 // mockData.ts - Data structure for Knowledge Bonsai Tree
+import { addNaturalRandomness, finalPolish, resolveAllLevels } from '@/utils/treeHelper';
 import { type Node, type Edge } from 'reactflow';
 
 /**
@@ -296,6 +297,9 @@ export function convertTreeToReactFlow(treeData: KnowledgeTreeData): {
 
   // Start from the root (pot) at the bottom center
   processNode(treeData.root, null, 0, 0);
+  resolveAllLevels(nodes);
+  addNaturalRandomness(nodes);
+  finalPolish(nodes);
 
   return { nodes, edges };
 }
