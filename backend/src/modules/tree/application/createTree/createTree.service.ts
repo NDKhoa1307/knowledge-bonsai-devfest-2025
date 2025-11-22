@@ -82,22 +82,27 @@ export class CreateTreeService {
     const bucket_name = 'knowledge-bonsai';
     const object_key = `trees/${user.id}/${Date.now()}_tree.json`;
 
-    const storage = new Storage();
+    try {
+      const storage = new Storage();
 
-    await storage
-      .bucket(bucket_name)
-      .file(object_key)
-      .save(JSON.stringify(treeData), {
-        contentType: 'application/json',
+      await storage
+        .bucket(bucket_name)
+        .file(object_key)
+        .save(JSON.stringify(treeData), {
+          contentType: 'application/json',
+        });
+
+      return await this.dbContext.tree.create({
+        data: {
+          ownerId: user.id,
+          title: title,
+          bucket_url: object_key,
+        },
+        select: { id: true },
       });
-
-    return await this.dbContext.tree.create({
-      data: {
-        ownerId: user.id,
-        title: title,
-        bucket_url: object_key,
-      },
-      select: { id: true },
-    });
+    } catch (error) {
+      console.error('❌ Error saving tree to GCS or DB:', error);
+      throw new Error('Failed to save tree data.');
+    }
   }
 }
