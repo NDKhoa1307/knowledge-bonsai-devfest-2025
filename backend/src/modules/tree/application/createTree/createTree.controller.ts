@@ -8,6 +8,7 @@ export class CreateTreeController {
 
   @Post('/trees')
   async createTree(@Body() data: CreateTreeDto): Promise<any> {
+    console.log(data);
     try {
       return await this.createTreeService.createTree(data);
     } catch (error) {
