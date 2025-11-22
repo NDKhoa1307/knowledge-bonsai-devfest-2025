@@ -1,0 +1,97 @@
+import { GoogleGenAI } from '@google/genai';
+import { Storage } from '@google-cloud/storage';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '@db/services';
+import { CreateTreeDto } from './createTree.dto';
+import { KnowledgeTreeDataSchema } from './createTree.schema';
+
+import { zodToJsonSchema } from 'zod-to-json-schema';
+
+@Injectable()
+export class CreateTreeService {
+  private readonly api_key: string;
+
+  constructor(private readonly dbContext: PrismaService) {
+    this.api_key = process.env.GEMINI_API_KEY || '';
+
+    if (!this.api_key.length) {
+      throw new Error('GEMINI_API_KEY environment variable is not set.');
+    }
+  }
+
+  async createTree(data: CreateTreeDto): Promise<string> {
+    const prompt = data.prompt.trim();
+    const username = data.username.trim();
+
+    const content = await this.generateContent(
+      `Create a detailed tree structure based on the following prompt: ${prompt}`,
+    );
+
+    await this.saveTreeToDB(username, content);
+
+    return content;
+  }
+
+  async generateContent(prompt: string): Promise<any> {
+    const ai = new GoogleGenAI({});
+
+    const jsonSchema = zodToJsonSchema(KnowledgeTreeDataSchema);
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseJsonSchema: jsonSchema,
+      },
+    });
+
+    const responseText = response.text;
+
+    if (!responseText) {
+      throw new Error('No response from the AI model.');
+    }
+
+    const parsedData = KnowledgeTreeDataSchema.parse(JSON.parse(responseText));
+
+    if (!parsedData) {
+      throw new Error('Failed to generate content from the AI model.');
+    }
+
+    return parsedData;
+  }
+
+  async saveTreeToDB(username: string, treeData: any): Promise<void> {
+    let user = await this.dbContext.user.findFirst({
+      where: { email: username },
+    });
+
+    if (!user) {
+      user = await this.dbContext.user.create({
+        data: { email: username, name: username },
+      });
+    }
+
+    const title = treeData.metadata.title || 'Untitled Tree';
+
+    const bucket_name = 'knowledge-bonsai';
+    const object_key = `trees/${user.id}/${Date.now()}_tree.json`;
+
+    const storage = new Storage();
+
+    await storage
+      .bucket(bucket_name)
+      .file(object_key)
+      .save(JSON.stringify(treeData), {
+        contentType: 'application/json',
+      });
+
+    await this.dbContext.tree.create({
+      data: {
+        ownerId: user.id,
+        title: title,
+        bucket_url: bucket_name,
+      },
+    });
+  }
+}
