@@ -1,10 +1,16 @@
-import { IsString, MinLength } from 'class-validator';
+import { IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class ContentDto {
+  @IsString()
+  text: string;
+}
 
 export class CreateTreeDto {
   @IsString()
-  @MinLength(3)
-  prompt: string;
-
-  @IsString()
   username: string;
+
+  @ValidateNested()
+  @Type(() => ContentDto)
+  content: ContentDto;
 }
