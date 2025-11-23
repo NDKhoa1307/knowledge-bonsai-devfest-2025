@@ -54,8 +54,9 @@ export const treeService = {
    */
   getTreeById: async (id: string): Promise<GetTreeResponse | null> => {
     try {
-      // Before calling the API, get the newest tree id from localStorage if available
       const localTreeData = localStorage.getItem(`lastTreeId`);
+      // After get, invalidate the local tree id
+      localStorage.removeItem(`lastTreeId`);
       const idToUse = localTreeData ? localTreeData : id;
       const response = await api.get<GetTreeResponse>(`/trees/${idToUse}`);
       return response.data;
