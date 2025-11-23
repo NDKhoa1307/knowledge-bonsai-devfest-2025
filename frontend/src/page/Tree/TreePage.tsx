@@ -33,12 +33,7 @@ function TreePage({ treeId }: { treeId?: string }) {
 
   useEffect(() => {
     const fetchTree = async () => {
-      if (treeId == null || treeId == undefined || treeId == "") {
-        console.warn("Tree ID is null, undefined, or empty, using sample data");
-        setFetchedTreeData(mockFrontendTree);
-        return;
-      }
-      const response = await treeService.getTreeById(treeId);
+      const response = await treeService.getTreeById(treeId ?? "");
       console.log("Fetched tree response:", response);
       if (response) {
         if (response.treeData == null) {
